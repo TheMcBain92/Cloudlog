@@ -247,14 +247,8 @@ class Logbook_model extends CI_Model {
        'COL_STX_STRING' => $this->input->post('stx_string'),
        'COL_SRX_STRING' => $this->input->post('srx_string'),
        'COL_QSL_VIA' => $this->input->post('qsl_via_callsign'),
-       'COL_MY_COUNTRY' => (!empty($this->input->post('station_country'))) ? $this->input->post('station_country') : null,
-       'COL_MY_GRIDSQUARE' => (!empty($this->input->post('station_gridsquare'))) ? $this->input->post('station_gridsquare') : null,
-       'COL_MY_CITY' => (!empty($this->input->post('station_city'))) ? $this->input->post('station_city') : null,
-       'COL_MY_IOTA' => (!empty($this->input->post('station_iota'))) ? $this->input->post('station_iota') : null,
-       'COL_MY_SOTA_REF' => (!empty($this->input->post('station_sota'))) ? $this->input->post('station_sota') : null,
-       'COL_MY_CNTY' => (!empty($this->input->post('station_cnty'))) ? $this->input->post('station_cnty') : null,
-       'COL_MY_CQ_ZONE' => (!empty($this->input->post('station_cq'))) ? $this->input->post('station_cq') : null,
-       'COL_MY_ITU_ZONE' => (!empty($this->input->post('station_itu'))) ? $this->input->post('station_itu') : null,
+       'station_id' => $this->input->post('station_profile'),
+       'COL_OPERATOR' => $this->input->post('operator_callsign'),
     );
 
     $this->db->where('COL_PRIMARY_KEY', $this->input->post('id'));
@@ -435,6 +429,7 @@ class Logbook_model extends CI_Model {
 								COL_SAT_NAME, 
 								COL_SAT_MODE, 
 								COL_QSL_RCVD, 
+								COL_COMMENT,
 								(CASE WHEN COL_QSL_VIA != \'\' THEN COL_QSL_VIA ELSE COL_CALL END) AS COL_ROUTING, 
 								ADIF, 
 								ENTITY 
@@ -980,6 +975,7 @@ class Logbook_model extends CI_Model {
       $this->db->where('station_profile.eqslqthnickname !=', '');
       $this->db->where($this->config->item('table_name').'.COL_EQSL_QSL_SENT !=', 'Y');
       $this->db->where($this->config->item('table_name').'.COL_EQSL_QSL_SENT !=', 'I');
+      $this->db->or_where(array($this->config->item('table_name').'.COL_EQSL_QSL_SENT' => NULL));
       return $this->db->get();
 
     }
