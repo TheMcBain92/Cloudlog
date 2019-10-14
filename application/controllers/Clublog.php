@@ -103,16 +103,22 @@ class Clublog extends CI_Controller {
 
 								$this->load->model('clublog_model');
 								$this->clublog_model->mark_qsos_sent($station_row->station_id);
+								echo "Clublog upload for ".$station_row->station_callsign;
+								log_message('info', 'Clublog upload for '.$station_row->station_callsign.' successfully sent.');
 							} else {
 								echo "Error ".$response;
+								log_message('error', 'Clublog upload for '.$station_row->station_callsign.' failed reason '.$response);
 							}
 
 							// Delete the ADIF file used for clublog
 							unlink('uploads/clublog'.$ranid.$station_row->station_id.'.adi');
+
 						}
 
 					} else {
-							echo "Nothing awaiting upload to clublog for ".$station_row->station_callsign;
+						echo "Nothing awaiting upload to clublog for ".$station_row->station_callsign;
+						
+						log_message('info', 'Nothing awaiting upload to clublog for '.$station_row->station_callsign);
 					}
 				}
 			}
@@ -131,11 +137,79 @@ class Clublog extends CI_Controller {
 		$this->clublog_model->mark_all_qsos_notsent($clean_station_id);
 	}
 
+
+	public function realtime($username) {
+		$clean_username = $this->security->xss_clean($username);
+
+		$this->load->model('stations');
+		$this->load->model('clublog_model');
+
+		$clublog_info = $this->clublog_model->get_clublog_auth_info($clean_username);
+
+		if(!isset($clublog_info['user_name'])) {
+			echo "Username unknown";
+			exit;
+		}
+
+		$station_profiles = $this->stations->all_with_count();
+
+		// if station profiles exist
+		if($station_profiles->num_rows()){
+			// Loop through station profiles
+			foreach ($station_profiles->result() as $station_row)
+			{
+				// if the station profile has more than 1 qso
+				if($station_row->qso_total > 0) {
+					$myqsos = $this->clublog_model->get_last_five($station_row->station_id);
+
+					foreach ($myqsos->result() as $qso)
+					{
+						$data['qso'] = $qso;
+						$adif_string = $this->load->view('adif/data/clublog_realtime', $data, true);
+
+						// initialise the curl request
+						$request = curl_init('https://clublog.org/realtime.php');
+
+						curl_setopt($request, CURLOPT_POST, true);
+						curl_setopt(
+							$request,
+							CURLOPT_POSTFIELDS,
+								array(
+								      'email' => $clublog_info['user_clublog_name'],
+								      'password' => $clublog_info['user_clublog_password'],
+								      'callsign' => $station_row->station_callsign,
+								      'adif' => $adif_string,
+								      'api' => "a11c3235cd74b88212ce726857056939d52372bd",
+								   ));
+
+						// output the response
+						curl_setopt($request, CURLOPT_RETURNTRANSFER, true);
+						$response = curl_exec($request);
+						$info = curl_getinfo($request);
+
+					// If Clublog Accepts mark the QSOs
+						if (preg_match('/\bOK\b/', $response)) {
+							echo "QSOs uploaded and Logbook QSOs marked as sent to Clublog<br>";
+
+							$this->clublog_model->mark_qso_sent($qso->COL_PRIMARY_KEY);
+							echo "Clublog upload for ".$station_row->station_callsign."<br>";
+						} else {
+							echo "Error ".$response."<br>";
+						}
+						curl_close ($request); 
+					}
+				} else {
+					echo "no qsos to upload";
+				}
+			}
+		}
+	}
+
 	// Find DXCC
 	function find_dxcc($callsign) {
 		$clean_callsign = $this->security->xss_clean($callsign);
 		// Live lookup against Clublogs API
-		$url = "https://secure.clublog.org/dxcc?call=".$clean_callsign."&api=a11c3235cd74b88212ce726857056939d52372bd&full=1";
+		$url = "https://clublog.org/dxcc?call=".$clean_callsign."&api=a11c3235cd74b88212ce726857056939d52372bd&full=1";
 
 		$json = file_get_contents($url);
 		$data = json_decode($json, TRUE);

@@ -221,6 +221,74 @@ class Logbook extends CI_Controller {
 		return;
 	}
 
+	function jsonlookupdxcc($country, $type, $band, $mode) {
+		
+		$return = [
+			"workedBefore" => false,
+		];
+
+		$CI =& get_instance();
+    	$CI->load->model('Stations');
+    	$station_id = $CI->Stations->find_active();
+
+		if($type == "SAT") {
+			$this->db->where('COL_PROP_MODE', 'SAT'); 
+		} else {
+			$this->db->where('COL_MODE', $mode); 
+			$this->db->where('COL_BAND', $band); 
+			$this->db->where('COL_PROP_MODE !=','SAT');
+
+		}
+
+    	$this->db->where('station_id', $station_id); 
+    	$this->db->where('COL_COUNTRY', urldecode($country)); 
+ 
+		$query = $this->db->get($this->config->item('table_name'), 1, 0);
+		foreach ($query->result() as $workedBeforeRow)
+		{
+			$return['workedBefore'] = true;
+		}
+
+		header('Content-Type: application/json');
+		echo json_encode($return, JSON_PRETTY_PRINT);
+
+		return;
+	}
+
+	function jsonlookupcallsign($callsign, $type, $band, $mode) {
+		
+		$return = [
+			"workedBefore" => false,
+		];
+
+		$CI =& get_instance();
+    	$CI->load->model('Stations');
+    	$station_id = $CI->Stations->find_active();
+
+		if($type == "SAT") {
+			$this->db->where('COL_PROP_MODE', 'SAT'); 
+		} else {
+			$this->db->where('COL_MODE', $mode); 
+			$this->db->where('COL_BAND', $band); 
+			$this->db->where('COL_PROP_MODE !=','SAT');
+
+		}
+
+    	$this->db->where('station_id', $station_id); 
+    	$this->db->where('COL_CALL', strtoupper($callsign)); 
+ 
+		$query = $this->db->get($this->config->item('table_name'), 1, 0);
+		foreach ($query->result() as $workedBeforeRow)
+		{
+			$return['workedBefore'] = true;
+		}
+
+		header('Content-Type: application/json');
+		echo json_encode($return, JSON_PRETTY_PRINT);
+
+		return;
+	}
+
 
 	/* Used to generate maps for displaying on /logbook/ */
 	function qso_map() {
@@ -314,6 +382,7 @@ class Logbook extends CI_Controller {
 					$html .= "<td>RST (R)</td>";
 					$html .= "<td>Band</td>";
 					$html .= "<td>Mode</td>";
+					$html .= "<td>QSL</td>";
 					$html .= "<td></td>";
 				$html .= "</tr>";
 			foreach ($query->result() as $row)
@@ -329,6 +398,32 @@ class Logbook extends CI_Controller {
 								$html .= "<td>".$row->COL_BAND."</td>";
 					}
 					$html .= "<td>".$row->COL_MODE."</td>";
+					$html .= "<td class=\"qsl\">";
+					$html .= "<span class=\"qsl-";
+					switch ($row->COL_QSL_SENT) {
+						case "Y":
+							$html .= "green";
+							break;
+						case "R":
+							$html .= "yellow";
+							break;
+						default:
+						   $html .= "red";
+					}
+					$html .= "\">&#9650;</span>";
+					$html .= "<span class=\"qsl-";
+					switch ($row->COL_QSL_RCVD) {
+						case "Y":
+							$html .= "green";
+							break;
+						case "R":
+							$html .= "yellow";
+							break;
+						default:
+						   $html .= "red";
+					}
+					$html .= "\">&#9660;</span>";
+					$html .= "</td>";
 					$html .= "<td><span class=\"badge badge-info\">".$row->station_callsign."</span></td>";
 				$html .= "</tr>";
 			}

@@ -12,7 +12,6 @@ class Logbook_model extends CI_Model {
   function create_qso() {
     // Join date+time
     $datetime = date("Y-m-d",strtotime($this->input->post('start_date')))." ". $this->input->post('start_time');
-
     if ($this->input->post('prop_mode') != null) {
             $prop_mode = $this->input->post('prop_mode');
     } else {
@@ -180,18 +179,7 @@ class Logbook_model extends CI_Model {
     $this->db->distinct();
     $this->db->like('COL_CALL', $callsign);
 
-    $query = $this->db->get($this->config->item('table_name'));
-
-    $result = "";
-
-    foreach ($query->result() as $row)
-    {
-
-      $result = $result." ".$row->COL_CALL;
-
-    }
-
-    return $result;
+    return $this->db->get($this->config->item('table_name'));
 
   }
 
@@ -971,24 +959,19 @@ class Logbook_model extends CI_Model {
 
       $this->db->select('station_profile.*, '.$this->config->item('table_name').'.COL_PRIMARY_KEY, '.$this->config->item('table_name').'.COL_TIME_ON, '.$this->config->item('table_name').'.COL_CALL, '.$this->config->item('table_name').'.COL_MODE, '.$this->config->item('table_name').'.COL_BAND, '.$this->config->item('table_name').'.COL_COMMENT, '.$this->config->item('table_name').'.COL_RST_SENT, '.$this->config->item('table_name').'.COL_PROP_MODE');
       $this->db->from('station_profile');
-      $this->db->join($this->config->item('table_name'),'station_profile.station_id = '.$this->config->item('table_name').'.station_id','left');
-      $this->db->where('station_profile.eqslqthnickname !=', '');
+      $this->db->join($this->config->item('table_name'),'station_profile.station_id = '.$this->config->item('table_name').'.station_id AND station_profile.eqslqthnickname != ""','left');
       $this->db->where($this->config->item('table_name').'.COL_EQSL_QSL_SENT !=', 'Y');
       $this->db->where($this->config->item('table_name').'.COL_EQSL_QSL_SENT !=', 'I');
       $this->db->or_where(array($this->config->item('table_name').'.COL_EQSL_QSL_SENT' => NULL));
       return $this->db->get();
-
     }
 
     function import($record, $station_id = "0") {
         $CI =& get_instance();
         $CI->load->library('frequency');
 
-
         // Join date+time
-
         $time_on = date('Y-m-d', strtotime($record['qso_date'])) ." ".date('H:i', strtotime($record['time_on']));
-
         if (isset($record['time_off'])) {
             $time_off = date('Y-m-d', strtotime($record['qso_date'])) ." ".date('H:i', strtotime($record['time_off']));
         } else {
@@ -1096,6 +1079,14 @@ class Logbook_model extends CI_Model {
           $cq_zone = NULL;
         }
 
+        if (isset($record['TX_PWR'])){
+            $tx_pwr =  filter_var($record['TX_PWR'],FILTER_SANITIZE_NUMBER_INT);;
+        }else{
+            $tx_pwr = NULL;
+        }
+
+
+        
         if (isset($record['call'])){
           $this->db->where('COL_CALL', $record['call']);
         }
@@ -1254,7 +1245,7 @@ class Logbook_model extends CI_Model {
                 'COL_TEN_TEN' => (!empty($record['ten_ten'])) ? $record['ten_ten'] : null,
                 'COL_TIME_ON' => $time_on,
                 'COL_TIME_OFF' => $time_off,
-                'COL_TX_PWR' => (!empty($record['tx_pwr'])) ? $record['tx_pwr'] : null,
+                'COL_TX_PWR' => (!empty($tx_pwr)) ? $tx_pwr : null,
                 'COL_UKSMG' => (!empty($record['uksmg'])) ? $record['uksmg'] : '',
                 'COL_USACA_COUNTIES' => (!empty($record['usaca_counties'])) ? $record['usaca_counties'] : '',
                 'COL_VUCC_GRIDS' =>((!empty($record['vucc_grids']))) ? $record['vucc_grids'] : '',
