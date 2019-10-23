@@ -108,13 +108,16 @@ class eqsl extends CI_Controller {
 		
 		if ($this->input->post('eqslimport') == 'fetch')
 		{			
+			//echo "import from clublog ADIF<br>";
 			$file = $config['upload_path'] . 'eqslreport_download.adi';
-			
+			//echo "<br>Download File: ".$file."<br>";
 			// Get credentials for eQSL
 			$query = $this->user_model->get_by_id($this->session->userdata('user_id'));
 			$q = $query->row();
 			$data['user_eqsl_name'] = $q->user_eqsl_name;
 			$data['user_eqsl_password'] = $q->user_eqsl_password;
+
+			//echo "<br>Username".$data['user_eqsl_name']."<br>";
 			
 			// Get URL for downloading the eqsl.cc inbox
 			$query = $query = $this->db->query('SELECT eqsl_download_url FROM config');
@@ -126,7 +129,11 @@ class eqsl extends CI_Controller {
 			{
 				$this->session->set_flashdata('warning', 'You have not defined your eQSL.cc credentials!'); redirect('eqsl/import');
 			}
-			
+
+			$this->load->model('stations');
+			$active_station_id = $this->stations->find_active();
+        	$station_profile = $this->stations->profile($active_station_id);
+			$active_station_info = $station_profile->row();
 			// Query the logbook to determine when the last LoTW confirmation was
 			$eqsl_last_qsl_date = $this->logbook_model->eqsl_last_qsl_rcvd_date();
 			
@@ -136,9 +143,12 @@ class eqsl extends CI_Controller {
 			$eqsl_url .= "&Password=" . $data['user_eqsl_password'];
 			
 			$eqsl_url .= "&RcvdSince=" . $eqsl_last_qsl_date;
+			$eqsl_url .= "&QTHNickname=" . $active_station_info->eqslqthnickname;
 			
 			// Pull back only confirmations
 			$eqsl_url .= "&ConfirmedOnly=1";
+
+			//echo "<br><br>".$eqsl_url."<br><br>";
 			
  			// At this point, what we get isn't the ADI file we need, but rather
 			// an HTML page, which contains a link to the generated ADI file that we want.
