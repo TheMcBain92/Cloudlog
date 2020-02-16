@@ -143,7 +143,7 @@ class eqsl extends CI_Controller {
 			$eqsl_url .= "&Password=" . $data['user_eqsl_password'];
 			
 			$eqsl_url .= "&RcvdSince=" . $eqsl_last_qsl_date;
-			$eqsl_url .= "&QTHNickname=" . $active_station_info->eqslqthnickname;
+			$eqsl_url .= "&QTHNickname=" . urlencode($active_station_info->eqslqthnickname);
 			
 			// Pull back only confirmations
 			$eqsl_url .= "&ConfirmedOnly=1";
@@ -368,14 +368,6 @@ class eqsl extends CI_Controller {
 				
 				# End all the required fields
 				
-                // adding comment as QSLMSG
-				$adif .= "%3C";
-				$adif .= "QSLMSG";
-				$adif .= "%3A";
-				$adif .= strlen($qsl['COL_COMMENT']);
-				$adif .= "%3E";
-				$adif .= $qsl['COL_COMMENT'];
-				$adif .= "%20";
 
 				// adding RST_Sent
 				$adif .= "%3C";

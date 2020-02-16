@@ -190,6 +190,34 @@ class Logbook_model extends CI_Model {
     return $this->db->get($this->config->item('table_name'));
   }
 
+    public function cq_qso_details($cqzone){
+        $CI =& get_instance();
+        $CI->load->model('Stations');
+        $station_id = $CI->Stations->find_active();
+
+        $this->db->where('station_id', $station_id);
+        $this->db->where('COL_CQZ', $cqzone);
+
+        return $this->db->get($this->config->item('table_name'));
+    }
+
+    public function was_qso_details($state, $band){
+        $CI =& get_instance();
+        $CI->load->model('Stations');
+        $station_id = $CI->Stations->find_active();
+
+        $this->db->where('station_id', $station_id);
+        $this->db->where('COL_STATE', $state);
+        $this->db->where_in('COL_DXCC', ['291', '6', '110']);
+        if($band != "SAT") {
+            $this->db->where('COL_BAND', $band);
+        } else {
+            $this->db->where('COL_PROP_MODE', "SAT");
+        }
+
+        return $this->db->get($this->config->item('table_name'));
+    }
+
   public function get_callsigns($callsign){
     $this->db->select('COL_CALL');
     $this->db->distinct();
@@ -812,6 +840,39 @@ class Logbook_model extends CI_Model {
       $station_id = $CI->Stations->find_active();
 
         $query = $this->db->query('SELECT DISTINCT (COL_COUNTRY) FROM '.$this->config->item('table_name').' WHERE station_id = '.$station_id.'');
+
+        return $query->num_rows();
+    }
+
+    /* Return total number of countrys confirmed with paper QSL */
+    function total_countrys_confirmed_paper() {
+      $CI =& get_instance();
+      $CI->load->model('Stations');
+      $station_id = $CI->Stations->find_active();
+
+        $query = $this->db->query('SELECT DISTINCT (COL_COUNTRY) FROM '.$this->config->item('table_name').' WHERE station_id = '.$station_id.' AND COL_QSL_RCVD =\'Y\'');
+
+        return $query->num_rows();
+    }
+
+    /* Return total number of countrys confirmed with eQSL */
+    function total_countrys_confirmed_eqsl() {
+      $CI =& get_instance();
+      $CI->load->model('Stations');
+      $station_id = $CI->Stations->find_active();
+
+        $query = $this->db->query('SELECT DISTINCT (COL_COUNTRY) FROM '.$this->config->item('table_name').' WHERE station_id = '.$station_id.' AND COL_EQSL_QSL_RCVD =\'Y\'');
+
+        return $query->num_rows();
+    }
+
+    /* Return total number of countrys confirmed with LoTW */
+    function total_countrys_confirmed_lotw() {
+      $CI =& get_instance();
+      $CI->load->model('Stations');
+      $station_id = $CI->Stations->find_active();
+
+        $query = $this->db->query('SELECT DISTINCT (COL_COUNTRY) FROM '.$this->config->item('table_name').' WHERE station_id = '.$station_id.' AND COL_LOTW_QSL_RCVD =\'Y\'');
 
         return $query->num_rows();
     }
@@ -1478,10 +1539,8 @@ class Logbook_model extends CI_Model {
             $dxcc_result = $this->db->select('`call`, `entity`, `adif`, `cqz`')
                                     ->where('call', substr($call, 0, $i))
                                     ->where('(start <= ', $date)
-                                    ->or_where("start = '0000-00-00'", NULL, false)
                                     ->or_where("start is null)", NULL, false)
                                     ->where('(end >= ', $date)
-                                    ->or_where("end = '0000-00-00'", NULL, false)
                                     ->or_where("end is null)", NULL, false)
                                     ->get('dxcc_prefixes');
 
@@ -1518,10 +1577,8 @@ class Logbook_model extends CI_Model {
               $dxcc_result = $this->db->select('*')
                                       ->where('call', substr($call, 0, $i))
                                       ->where('(start <= ', $date)
-                                      ->or_where("start = '0000-00-00'", NULL, false)
                                       ->or_where("start is null)", NULL, false)
                                       ->where('(end >= ', $date)
-                                      ->or_where("end = '0000-00-00'", NULL, false)
                                       ->or_where("end is null)", NULL, false)
                                       ->get('dxcc_prefixes');
 
