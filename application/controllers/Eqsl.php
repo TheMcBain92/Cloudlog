@@ -568,5 +568,47 @@ class eqsl extends CI_Controller {
 		$this->load->view('eqsl/export');
 		$this->load->view('interface_assets/footer');
 	}
+
+	function image($id, $callsign, $mode, $band, $hour, $minute, $day, $month, $year) {
+		$this->load->library('electronicqsl');
+		$this->load->model('Eqsl_images');
+
+		if($this->Eqsl_images->get_image($id) == "No Image") {
+			$query = $this->user_model->get_by_id($this->session->userdata('user_id'));
+			$q = $query->row();
+			$username = $q->user_eqsl_name;
+			$password = $q->user_eqsl_password;
+
+
+			$image_url = $this->electronicqsl->card_image($username, $password, $callsign, $band, $mode, $year, $month, $day, $hour, $minute);
+			$file = file_get_contents($image_url, true);
+
+			$dom = new domDocument; 
+			$dom->loadHTML($file); 
+			$dom->preserveWhiteSpace = false;
+			$images = $dom->getElementsByTagName('img');
+
+			if(!isset($images)) {
+				echo "Rate Limited";
+				exit;
+			}
+
+			foreach ($images as $image) 
+			{ 
+			 header('Content-Type: image/jpg');
+			 readfile ("https://www.eqsl.cc".$image->getAttribute('src')); 
+			 $content = file_get_contents("https://www.eqsl.cc".$image->getAttribute('src'));
+			 $filename = uniqid().'.jpg';
+			 file_put_contents('images/eqsl_card_images/' . '/'.$filename, $content);
+
+			 $this->Eqsl_images->save_image($id, $filename);
+			}
+		} else {
+			header('Content-Type: image/jpg');
+			$image_url = base_url('images/eqsl_card_images/'.$this->Eqsl_images->get_image($id));
+			readfile($image_url); 
+		}
+
+	}
 	
 } // end class
