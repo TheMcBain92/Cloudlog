@@ -194,24 +194,82 @@
             <div class="form-group">
               <label for="selectPropagation">Propagation Mode</label>
               <select class="custom-select" id="selectPropagation" name="prop_mode">
-                <option value="" selected="selected"></option>
-                <option value="AUR">Aurora</option>
-                <option value="AUE">Aurora-E</option>
-                <option value="BS">Back scatter</option>
-                <option value="ECH">EchoLink</option>
-                <option value="EME">Earth-Moon-Earth</option>
-                <option value="ES">Sporadic E</option>
-                <option value="FAI">Field Aligned Irregularities</option>
-                <option value="F2">F2 Reflection</option>
-                <option value="INTERNET">Internet-assisted</option>
-                <option value="ION">Ionoscatter</option>
-                <option value="IRL">IRLP</option>
-                <option value="MS">Meteor scatter</option>
-                <option value="RPT">Terrestrial or atmospheric repeater or transponder</option>
-                <option value="RS">Rain scatter</option>
-                <option value="SAT">Satellite</option>
-                <option value="TEP">Trans-equatorial</option>
-                <option value="TR">Tropospheric ducting</option>
+                <option value="" <?php if(!empty($this->session->userdata('prop_mode'))) { echo "selected=\"selected\""; } ?>></option>
+                <option value="AUR" <?php if($this->session->userdata('prop_mode') == "AUR") { echo "selected=\"selected\""; } ?>>Aurora</option>
+                <option value="AUE" <?php if($this->session->userdata('prop_mode') == "AUE") { echo "selected=\"selected\""; } ?>>Aurora-E</option>
+                <option value="BS" <?php if($this->session->userdata('prop_mode') == "BS") { echo "selected=\"selected\""; } ?>>Back scatter</option>
+                <option value="ECH" <?php if($this->session->userdata('prop_mode') == "ECH") { echo "selected=\"selected\""; } ?>>EchoLink</option>
+                <option value="EME" <?php if($this->session->userdata('prop_mode') == "EME") { echo "selected=\"selected\""; } ?>>Earth-Moon-Earth</option>
+                <option value="ES" <?php if($this->session->userdata('prop_mode') == "ES") { echo "selected=\"selected\""; } ?>>Sporadic E</option>
+                <option value="FAI" <?php if($this->session->userdata('prop_mode') == "FAI") { echo "selected=\"selected\""; } ?>>Field Aligned Irregularities</option>
+                <option value="F2" <?php if($this->session->userdata('prop_mode') == "F2") { echo "selected=\"selected\""; } ?>>F2 Reflection</option>
+                <option value="INTERNET" <?php if($this->session->userdata('prop_mode') == "INTERNET") { echo "selected=\"selected\""; } ?>>Internet-assisted</option>
+                <option value="ION" <?php if($this->session->userdata('prop_mode') == "ION") { echo "selected=\"selected\""; } ?>>Ionoscatter</option>
+                <option value="IRL" <?php if($this->session->userdata('prop_mode') == "IRL") { echo "selected=\"selected\""; } ?>>IRLP</option>
+                <option value="MS" <?php if($this->session->userdata('prop_mode') == "AUR") { echo "selected=\"selected\""; } ?>>Meteor scatter</option>
+                <option value="RPT" <?php if($this->session->userdata('prop_mode') == "RPT") { echo "selected=\"selected\""; } ?>>Terrestrial or atmospheric repeater or transponder</option>
+                <option value="RS" <?php if($this->session->userdata('prop_mode') == "RS") { echo "selected=\"selected\""; } ?>>Rain scatter</option>
+                <option value="SAT" <?php if($this->session->userdata('prop_mode') == "SAT") { echo "selected=\"selected\""; } ?>>Satellite</option>
+                <option value="TEP" <?php if($this->session->userdata('prop_mode') == "TEP") { echo "selected=\"selected\""; } ?>>Trans-equatorial</option>
+                <option value="TR" <?php if($this->session->userdata('prop_mode') == "TR") { echo "selected=\"selected\""; } ?>>Tropospheric ducting</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="usa_state">USA State</label>
+              <select class="custom-select" name="usa_state">
+                <option value=""></option>
+                <option value="AL">Alabama (AL)</option>
+                <option value="AK">Alaska (AK)</option>
+                <option value="AZ">Arizona (AZ)</option>
+                <option value="AR">Arkansas (AR)</option>
+                <option value="CA">California (CA)</option>
+                <option value="CO">Colorado (CO)</option>
+                <option value="CT">Connecticut (CT)</option>
+                <option value="DE">Delaware (DE)</option>
+                <option value="DC">District Of Columbia (DC)</option>
+                <option value="FL">Florida (FL)</option>
+                <option value="GA">Georgia (GA)</option>
+                <option value="HI">Hawaii (HI)</option>
+                <option value="ID">Idaho (ID)</option>
+                <option value="IL">Illinois (IL)</option>
+                <option value="IN">Indiana (IN)</option>
+                <option value="IA">Iowa (IA)</option>
+                <option value="KS">Kansas (KS)</option>
+                <option value="KY">Kentucky (KY)</option>
+                <option value="LA">Louisiana (LA)</option>
+                <option value="ME">Maine (ME)</option>
+                <option value="MD">Maryland (MD)</option>
+                <option value="MA">Massachusetts (MA)</option>
+                <option value="MI">Michigan (MI)</option>
+                <option value="MN">Minnesota (MN)</option>
+                <option value="MS">Mississippi (MS)</option>
+                <option value="MO">Missouri (MO)</option>
+                <option value="MT">Montana (MT)</option>
+                <option value="NE">Nebraska (NE)</option>
+                <option value="NV">Nevada (NV)</option>
+                <option value="NH">New Hampshire (NH)</option>
+                <option value="NJ">New Jersey (NJ)</option>
+                <option value="NM">New Mexico (NM)</option>
+                <option value="NY">New York (NY)</option>
+                <option value="NC">North Carolina (NC)</option>
+                <option value="ND">North Dakota (ND)</option>
+                <option value="OH">Ohio (OH)</option>
+                <option value="OK">Oklahoma (OK)</option>
+                <option value="OR">Oregon (OR)</option>
+                <option value="PA">Pennsylvania (PA)</option>
+                <option value="RI">Rhode Island (RI)</option>
+                <option value="SC">South Carolina (SC)</option>
+                <option value="SD">South Dakota (SD)</option>
+                <option value="TN">Tennessee (TN)</option>
+                <option value="TX">Texas (TX)</option>
+                <option value="UT">Utah (UT)</option>
+                <option value="VT">Vermont (VT)</option>
+                <option value="VA">Virginia (VA)</option>
+                <option value="WA">Washington (WA)</option>
+                <option value="WV">West Virginia (WV)</option>
+                <option value="WI">Wisconsin (WI)</option>
+                <option value="WY">Wyoming (WY)</option>
               </select>
             </div>
 
@@ -308,7 +366,9 @@
 <?php } ?>
 
     <div class="card qso-map">
-        <div class="card-header"><h4 class="card-title">QSO Map</h4></div>
+        <div class="card-header">
+          <h4 class="card-title">QSO Map</h4>
+        </div>
 
             <div id="qsomap" style="width: 100%; height: 200px;"></div>
     </div>
@@ -339,7 +399,7 @@
             foreach ($query->result() as $row) { ?>
                   <?php  echo '<tr class="tr'.($i & 1).'">'; ?>
                   <td><?php echo date($this->config->item('qso_date_format').' H:i',strtotime($row->COL_TIME_ON)); ?></td>
-                  <td><a class="qsobox" data-fancybox data-type="iframe" data-src="<?php echo site_url('logbook/view')."/".$row->COL_PRIMARY_KEY; ?>" href="javascript:;"><?php echo str_replace("0","&Oslash;",strtoupper($row->COL_CALL)); ?></a></td>
+                  <td><a class="qsobox" data-fancybox data-type="iframe" data-width="750" data-height="520" data-src="<?php echo site_url('logbook/view')."/".$row->COL_PRIMARY_KEY; ?>" href="javascript:;"><?php echo str_replace("0","&Oslash;",strtoupper($row->COL_CALL)); ?></a></td>
                   <td><?php echo $row->COL_MODE; ?></td>
                   <td><?php echo $row->COL_RST_SENT; ?></td>
                   <td><?php echo $row->COL_RST_RCVD; ?></td>

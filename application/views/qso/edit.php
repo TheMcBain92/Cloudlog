@@ -18,16 +18,14 @@
 
 	</head>
 
-	<body class="qso-edit-box">
+	<body class="container-fluid qso-edit-box">
 
-		<!-- Option to Delete QSO -->
-		<div style="float: right; padding-right: 60px; padding-top: 30px;">
-			<p></p>
-		</div>
-
+<div class="container-fluid">
+	<div class="row">
+		<div class="col">
 		<?php echo validation_errors(); ?>
 		<form method="post" action="<?php echo site_url('qso/edit'); ?>" name="qsos">
-<div class="card">
+	<div class="card">
 	<div class="card-header"> 
 		<nav class="card-header-tabs">
 			<div class="nav nav-tabs" id="nav-tab" role="tablist">
@@ -157,6 +155,11 @@
 
 			<!-- Awards Panel Contents -->
 			<div class="tab-pane fade" id="nav-awards" role="tabpanel" aria-labelledby="nav-awards-tab">
+				<div class="form-group">
+	            	<label for="usa_state">USA State</label>
+	                <input type="text" class="form-control" id="usa_state" name="usa_state" value="<?php echo $COL_STATE; ?>">
+	            </div>
+
 				<div class="form-group">
 	            	<label for="iota_ref">IOTA</label>
 	                <input type="text" class="form-control" id="iota_ref" name="iota_ref" value="<?php echo $COL_IOTA; ?>">
@@ -340,7 +343,11 @@
 	</div>
 </div>
 
-	</form>
+	</form>			
+		</div>
+	</div>
+</div>
+
 	</body>
 </html>
 

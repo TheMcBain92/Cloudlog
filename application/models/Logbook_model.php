@@ -20,7 +20,7 @@ class Logbook_model extends CI_Model {
 
     if($this->input->post('sat_name')) {
         $prop_mode = "SAT";
-    }
+    } 
 
     if($this->session->userdata('user_locator')){
         $locator = $this->session->userdata('user_locator');
@@ -106,6 +106,7 @@ class Logbook_model extends CI_Model {
             'COL_LON' => null,
             'COL_DXCC' => $dxcc_id,
             'COL_CQZ' => $cqz,
+            'COL_STATE' => trim($this->input->post('usa_state')),
             'COL_SOTA_REF' => trim($this->input->post('sota_ref')),
 			      'COL_DARC_DOK' => trim($this->input->post('darc_dok')),
     );
@@ -281,6 +282,7 @@ class Logbook_model extends CI_Model {
        'COL_QSL_VIA' => $this->input->post('qsl_via_callsign'),
        'station_id' => $this->input->post('station_profile'),
        'COL_OPERATOR' => $this->input->post('operator_callsign'),
+       'COL_STATE' =>$this->input->post('usa_state')
     );
 
     $this->db->where('COL_PRIMARY_KEY', $this->input->post('id'));
