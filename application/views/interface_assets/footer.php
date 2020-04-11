@@ -24,6 +24,18 @@
                     format: 'DD/MM/YYYY',
                 });
             });
+
+            $(function () {
+                $('#datetimepicker3').datetimepicker({
+                    format: 'DD/MM/YYYY',
+                });
+            });
+
+            $(function () {
+                $('#datetimepicker4').datetimepicker({
+                    format: 'DD/MM/YYYY',
+                });
+            });
         </script>
     <?php } ?>
 
@@ -363,6 +375,8 @@ $(document).on('keypress',function(e) {
       $('#qsl_via').val("");
       $('#callsign_info').text("");
       $('#input_usa_state').val("");
+      $('#qso-last-table').show();
+      $('#partial_view').hide();
 
       mymap.setView([51.505, -0.09], 13);
       mymap.removeLayer(markers);
@@ -584,7 +598,9 @@ $(document).on('keypress',function(e) {
             if($('#iota_ref').val() == "") {
                 $('#iota_ref').val(result.callsign_iota);
             }
-
+            // Hide the last QSO table
+            $('#qso-last-table').hide();
+            $('#partial_view').show();
             /* display past QSOs */
             $('#partial_view').html(result.partial);
             });
@@ -873,9 +889,11 @@ $(document).ready(function(){
   
   var grid_two = <?php echo $grid_2char; ?>;
   var grid_four = <?php echo $grid_4char; ?>;
+  var grid_six = <?php echo $grid_6char; ?>;
 
   var grid_two_confirmed = <?php echo $grid_2char_confirmed; ?>;
   var grid_four_confirmed = <?php echo $grid_4char_confirmed; ?>;
+  var grid_six_confirmed = <?php echo $grid_6char_confirmed; ?>;
 
   var maidenhead = L.maidenhead().addTo(map);
 
