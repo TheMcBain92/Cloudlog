@@ -13,8 +13,7 @@
 .idea/*
 .DS_Store
 sync.sh
-application/config/test.txt
 updates/cty.xml.gz
 favicon.ico
 favicon.icoold
-dwsync.xml
+*dwsync.xml
