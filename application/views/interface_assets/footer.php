@@ -290,7 +290,9 @@ $(document).on('keypress',function(e) {
 
     $(document).ready(function() {
 
-    $('.callsign-suggest').hide();    
+    $('.callsign-suggest').hide();
+
+    setRst($(".mode").val());
 
     /* On Page Load */
     var catcher = function() {
@@ -397,6 +399,7 @@ $(document).on('keypress',function(e) {
      if (e.key === "Escape") { // escape key maps to keycode `27`
        reset_fields();
 	   $('#callsign').val("");
+	   $("#callsign").focus();
     }
 });
 });
@@ -412,6 +415,76 @@ $(document).on('keypress',function(e) {
       });
     }
     });
+
+    $('#dxcc_id').on('change', function() {
+        $.getJSON('logbook/jsonentity/' + $(this).val(), function (result) {
+            if (result.dxcc.name != undefined) {
+
+                $('#country').val(convert_case(result.dxcc.name));
+                $('#cqz').val(convert_case(result.dxcc.cqz));
+
+                $('#callsign_info').removeClass("badge-secondary");
+                $('#callsign_info').removeClass("badge-success");
+                $('#callsign_info').removeClass("badge-danger");
+                $('#callsign_info').attr('title', '');
+                $('#callsign_info').text(convert_case(result.dxcc.name));
+
+                changebadge(result.dxcc.name);
+
+                // Set Map to Lat/Long it locator is not empty
+                if($('#locator').val() == "") {
+                    markers.clearLayers();
+                    var marker = L.marker([result.dxcc.lat, result.dxcc.long]);
+                    mymap.panTo([result.dxcc.lat, result.dxcc.long], 8);
+                    markers.addLayer(marker).addTo(mymap);
+                }
+            }
+        });
+    });
+
+    function changebadge(entityname) {
+        if($("#sat_name" ).val() != "") {
+            $.getJSON('logbook/jsonlookupdxcc/' + convert_case(entityname) + '/SAT/0/0', function(result)
+            {
+
+                $('#callsign_info').removeClass("badge-secondary");
+                $('#callsign_info').removeClass("badge-success");
+                $('#callsign_info').removeClass("badge-danger");
+                $('#callsign_info').attr('title', '');
+
+                if (result.workedBefore)
+                {
+                    $('#callsign_info').addClass("badge-success");
+                    $('#callsign_info').attr('title', 'DXCC was already worked in the past on this band and mode!');
+                }
+                else
+                {
+                    $('#callsign_info').addClass("badge-danger");
+                    $('#callsign_info').attr('title', 'New DXCC, not worked on this band and mode!');
+                }
+            })
+        } else {
+            $.getJSON('logbook/jsonlookupdxcc/' + convert_case(entityname) + '/0/' + $("#band").val() +'/' + $("#mode").val(), function(result)
+            {
+                // Reset CSS values before updating
+                $('#callsign_info').removeClass("badge-secondary");
+                $('#callsign_info').removeClass("badge-success");
+                $('#callsign_info').removeClass("badge-danger");
+                $('#callsign_info').attr('title', '');
+
+                if (result.workedBefore)
+                {
+                    $('#callsign_info').addClass("badge-success");
+                    $('#callsign_info').attr('title', 'DXCC was already worked in the past on this band and mode!');
+                }
+                else
+                {
+                    $('#callsign_info').addClass("badge-danger");
+                    $('#callsign_info').attr('title', 'New DXCC, not worked on this band and mode!');
+                }
+            })
+        }
+    }
 
     $("#callsign").focusout(function() {
 
@@ -477,51 +550,8 @@ $(document).on('keypress',function(e) {
 					  }
 					})
 				  }
-				
-			  
-				
-				if($("#sat_name" ).val() != "") {
-					//logbook/jsonlookupgrid/io77/SAT/0/0
-					$.getJSON('logbook/jsonlookupdxcc/' + convert_case(result.dxcc.entity) + '/SAT/0/0', function(result)
-					{
-					  
-					  $('#callsign_info').removeClass("badge-secondary");
-					  $('#callsign_info').removeClass("badge-success");
-					  $('#callsign_info').removeClass("badge-danger");
-					  $('#callsign_info').attr('title', '');
 
-					  if (result.workedBefore)
-					  {
-						$('#callsign_info').addClass("badge-success");
-						$('#callsign_info').attr('title', 'DXCC was already worked in the past on this band and mode!');
-					  }
-					  else
-					  {
-						$('#callsign_info').addClass("badge-danger");
-						$('#callsign_info').attr('title', 'New DXCC, not worked on this band and mode!');
-					  }
-					})
-				  } else {
-					$.getJSON('logbook/jsonlookupdxcc/' + convert_case(result.dxcc.entity) + '/0/' + $("#band").val() +'/' + $("#mode").val(), function(result)
-					{
-					  // Reset CSS values before updating
-					  $('#callsign_info').removeClass("badge-secondary");
-					  $('#callsign_info').removeClass("badge-success");
-					  $('#callsign_info').removeClass("badge-danger");
-					  $('#callsign_info').attr('title', '');
-
-					  if (result.workedBefore)
-					  {
-						$('#callsign_info').addClass("badge-success");
-						$('#callsign_info').attr('title', 'DXCC was already worked in the past on this band and mode!');
-					  }
-					  else
-					  {
-						$('#callsign_info').addClass("badge-danger");
-						$('#callsign_info').attr('title', 'New DXCC, not worked on this band and mode!');
-					  }
-					})
-				  }
+                  changebadge(result.dxcc.entity);
               }
 
               if(result.lotw_member == "active") {
@@ -530,6 +560,7 @@ $(document).on('keypress',function(e) {
 
               $('#dxcc_id').val(result.dxcc.adif);
               $('#cqz').val(result.dxcc.cqz);
+              $('#ituz').val(result.dxcc.ituz);
 
 
 
@@ -725,20 +756,25 @@ $(document).on('keypress',function(e) {
 
     // Change report based on mode
     $('.mode').change(function(){
-      if($(this).val() == 'JT65' || $(this).val() == 'JT65B' || $(this).val() == 'JT6C' || $(this).val() == 'JTMS' || $(this).val() == 'ISCAT' || $(this).val() == 'MSK144' || $(this).val() == 'JTMSK' || $(this).val() == 'QRA64'){
-      $('#rst_sent').val('-5');
-      $('#rst_recv').val('-5');
-      } else if ($(this).val() == 'FSK441' || $(this).val() == 'JT6M') {
-        $('#rst_sent').val('26');
-      $('#rst_recv').val('26');
-      } else if ($(this).val() == 'CW' || $(this).val() == 'RTTY' || $(this).val() == 'PSK31' || $(this).val() == 'PSK63') {
-      $('#rst_sent').val('599');
-      $('#rst_recv').val('599');
-      } else {
-        $('#rst_sent').val('59');
-      $('#rst_recv').val('59');
-      }
+      setRst($('.mode') .val());
     });
+
+    function setRst(mode) {
+        if(mode == 'JT65' || mode == 'JT65B' || mode == 'JT6C' || mode == 'JTMS' || mode == 'ISCAT' || mode == 'MSK144' || mode == 'JTMSK' || mode == 'QRA64' || mode == 'FT8' || mode == 'FT4' || mode == 'JS8' || mode == 'JT9' || mode == 'JT9-1'){
+            $('#rst_sent').val('-5');
+            $('#rst_recv').val('-5');
+        } else if (mode == 'FSK441' || mode == 'JT6M') {
+            $('#rst_sent').val('26');
+            $('#rst_recv').val('26');
+        } else if (mode == 'CW' || mode == 'RTTY' || mode == 'PSK31' || mode == 'PSK63') {
+            $('#rst_sent').val('599');
+            $('#rst_recv').val('599');
+        } else {
+            $('#rst_sent').val('59');
+            $('#rst_recv').val('59');
+        }
+    }
+
 
   /* Javascript for controlling rig frequency. */
 <?php if ( $_GET['manual'] == 0 ) { ?>
@@ -772,19 +808,7 @@ $(document).on('keypress',function(e) {
 
           if (old_mode !== $(".mode").val()) {
             // Update RST on mode change via CAT
-            if(data.mode == 'JT65' || data.mode == 'JT65B' || data.mode == 'JT6C' || data.mode == 'JTMS' || data.mode == 'ISCAT' || data.mode == 'MSK144' || data.mode == 'JTMSK' || data.mode == 'QRA64'){
-              $('#rst_sent').val('-5');
-              $('#rst_recv').val('-5');
-            } else if (data.mode == 'FSK441' || data.mode == 'JT6M') {
-              $('#rst_sent').val('26');
-              $('#rst_recv').val('26');
-            } else if (data.mode == 'CW') {
-              $('#rst_sent').val('599');
-              $('#rst_recv').val('599');
-            } else {
-              $('#rst_sent').val('59');
-              $('#rst_recv').val('59');
-            }
+            setRst($(".mode").val());
           }
           $("#sat_name").val(data.satname);  
           $("#sat_mode").val(data.satmode);  
@@ -920,31 +944,42 @@ $(document).ready(function(){
       }
 
       $.getJSON( "<?php echo site_url('gridsquares/');?>" + search_tags, function( data ) {
+        var count = Object.keys(data).length;
+        console.log("Count: " + count);
         var items = [];
         $.each( data, function( i, item ) {
           console.log(item.COL_CALL + item.COL_SAT_NAME);
           if(item.COL_SAT_NAME != undefined) {
-            items.push( "<tr><td>" + item.COL_TIME_ON + "</td><td>" + item.COL_CALL + "</td><td>" + item.COL_MODE + "</td><td>" + item.COL_SAT_NAME + "</td></tr>" );
+            items.push( "<tr><td>" + item.COL_TIME_ON + "</td><td>" + item.COL_CALL + "</td><td>" + item.COL_MODE + "</td><td>" + item.COL_SAT_NAME + "</td><td>" + item.COL_GRIDSQUARE + "</td></tr>" );
           } else {
-            items.push( "<tr><td>" + item.COL_TIME_ON + "</td><td>" + item.COL_CALL + "</td><td>" + item.COL_MODE + "</td><td>" + item.COL_BAND + "</td></tr>" );
+            items.push( "<tr><td>" + item.COL_TIME_ON + "</td><td>" + item.COL_CALL + "</td><td>" + item.COL_MODE + "</td><td>" + item.COL_BAND + "</td><td>" + item.COL_GRIDSQUARE + "</td></tr>" );
           }
         });
 
+        $('#qso_count').text(count);
+        if (count > 1) {
+           $('#gt1_qso').text("s");
+        } else {
+           $('#gt1_qso').text("");
+        }
+
         $("#grid_results tbody").empty(); 
-        $("#grid_results tbody").append(items.join( "" )); 
+        if (count > 0) {
+          $("#grid_results tbody").append(items.join( "" ));
+
+          $('#square_number').text(loc_4char);
+          $('#exampleModal').modal('show');
+        }
 
       });
-
-      $('#square_number').text(loc_4char);
-      $('#exampleModal').modal('show');
     }
   };
 
 <?php if ($this->uri->segment(1) == "gridsquares" && $this->uri->segment(2) == "band") { ?>
 
   var bands_available = <?php echo $bands_available; ?>;
-
-  $.each(bands_available, function(key, value) {   
+  $('#gridsquare_bands').append('<option value="All">All</option>')
+  $.each(bands_available, function(key, value) {
      $('#gridsquare_bands')
          .append($("<option></option>")
                     .attr("value",value)
@@ -971,6 +1006,47 @@ $(document).ready(function(){
 <?php } ?>
 
 </script>
+<?php } ?>
+
+<?php if ($this->uri->segment(1) == "dayswithqso") { ?>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <script>
+        var baseURL= "<?php echo base_url();?>";
+        $.ajax({
+            url: baseURL+'index.php/dayswithqso/get_days',
+            success: function(data) {
+                var labels = [];
+                var dataDxcc = [];
+                $.each(data, function(){
+                    labels.push(this.Year);
+                    dataDxcc.push(this.Days);
+                });
+                var ctx = document.getElementById("myChartDiff").getContext('2d');
+                var myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Days with QSOs',
+                            data: dataDxcc,
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                beginAtZero:true
+                                }
+                            }]
+                        },
+                    }
+                });
+            }
+        });
+    </script>
 <?php } ?>
 
 <?php if ($this->uri->segment(1) == "distances") { ?>
@@ -1087,6 +1163,18 @@ $(document).ready(function(){
 
 </script>
 <?php } ?>
+
+    <?php if ($this->uri->segment(2) == "import") { ?>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/js/tempusdominus-bootstrap-4.min.js"></script>
+        <script type="text/javascript">
+            $(function () {
+                $('#datetimepicker1').datetimepicker({
+                    format: 'DD/MM/YYYY',
+                });
+            });
+        </script>
+    <?php } ?>
 
   </body>
 </html>

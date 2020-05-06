@@ -28,6 +28,12 @@ class Logbook_model extends CI_Model {
         $locator = $this->config->item('locator');
     }
 
+    if($this->input->post('transmit_power')) {
+        $tx_power = $this->input->post('transmit_power');
+    } else {
+        $tx_power = null;
+    }
+
     if($this->input->post('country') == "") {
       $dxcc = $this->check_dxcc_table(strtoupper(trim($this->input->post('callsign'))), $datetime);
       $country = ucwords(strtolower($dxcc[1]));
@@ -56,7 +62,7 @@ class Logbook_model extends CI_Model {
       }
 
     } else {
-      $dxcc_id = $this->input->post('dxcc_id');
+        $dxcc_id = $this->input->post('dxcc_id');
     }
 
     // Create array with QSO Data
@@ -93,7 +99,7 @@ class Logbook_model extends CI_Model {
             'COL_A_INDEX' => null,
             'COL_AGE' => null,
             'COL_TEN_TEN' => null,
-            'COL_TX_PWR' => trim($this->input->post('transmit_power')),
+            'COL_TX_PWR' => $tx_power,
             'COL_STX' => null,
             'COL_SRX' => null,
             'COL_NR_BURSTS' => null,
@@ -257,6 +263,26 @@ class Logbook_model extends CI_Model {
         return $this->db->get($this->config->item('table_name'));
     }
 
+    public function timeline_qso_details($adif, $band){
+        $CI =& get_instance();
+        $CI->load->model('Stations');
+        $station_id = $CI->Stations->find_active();
+
+        if ($band != 'All') {
+            if ($band == 'SAT') {
+                $this->db->where('col_prop_mode', $band);
+            } else {
+                $this->db->where('COL_PROP_MODE !=', 'SAT');
+                $this->db->where('col_band', $band);
+            }
+        }
+
+        $this->db->where('station_id', $station_id);
+        $this->db->where('COL_DXCC', $adif);
+
+        return $this->db->get($this->config->item('table_name'));
+    }
+
     public function was_qso_details($state, $band){
         $CI =& get_instance();
         $CI->load->model('Stations');
@@ -301,6 +327,9 @@ class Logbook_model extends CI_Model {
   /* Edit QSO */
   function edit() {
 
+      $entity = $this->get_entity($this->input->post('dxcc_id'));
+      $country = $entity['name'];
+
     $data = array(
        'COL_TIME_ON' => $this->input->post('time_on'),
        'COL_TIME_OFF' => $this->input->post('time_off'),
@@ -314,7 +343,9 @@ class Logbook_model extends CI_Model {
        'COL_VUCC_GRIDS' => strtoupper(trim($this->input->post('vucc_grids'))),
        'COL_COMMENT' => $this->input->post('comment'),
        'COL_NAME' => $this->input->post('name'),
-       'COL_COUNTRY' => $this->input->post('country'),
+       'COL_COUNTRY' => $country,
+       'COL_DXCC'=> $this->input->post('dxcc_id'),
+       'COL_CQZ' => $this->input->post('cqz'),
        'COL_SAT_NAME' => $this->input->post('sat_name'),
        'COL_SAT_MODE' => $this->input->post('sat_mode'),
        'COL_QSLSDATE' => date('Y-m-d'),
@@ -1133,6 +1164,7 @@ class Logbook_model extends CI_Model {
         $CI =& get_instance();
         $CI->load->library('frequency');
         $my_error = "";
+
         // Join date+time
         $time_on = date('Y-m-d', strtotime($record['qso_date'])) ." ".date('H:i', strtotime($record['time_on']));
         
@@ -1184,7 +1216,8 @@ class Logbook_model extends CI_Model {
         if (isset($record['call'])){
           if ($dxccAdif != NULL) {
               if (isset($record['dxcc'])) {
-                  $dxcc = array($record['dxcc'], $this->get_entity($record['dxcc']));
+                  $entity = $this->get_entity($record['dxcc']);
+                  $dxcc = array($record['dxcc'], $entity['name']);
               } else {
                   $dxcc = NULL;
               }
@@ -1239,8 +1272,8 @@ class Logbook_model extends CI_Model {
                 }
         }
 
-        if(isset($record['CQZ'])) {
-          $cq_zone = $record['CQZ'];
+        if(isset($record['cqz'])) {
+          $cq_zone = $record['cqz'];
         } elseif(isset($dxcc[2])) {
           $cq_zone = $dxcc[2];
         } else {
@@ -1276,8 +1309,8 @@ class Logbook_model extends CI_Model {
         }
 
         // Sanitise TX_POWER
-        if (isset($record['TX_PWR'])){
-            $tx_pwr = filter_var($record['TX_PWR'],FILTER_SANITIZE_NUMBER_INT);
+        if (isset($record['tx_pwr'])){
+            $tx_pwr = filter_var($record['tx_pwr'],FILTER_SANITIZE_NUMBER_INT);
         }else{
             $tx_pwr = NULL;
         }
@@ -1705,12 +1738,12 @@ class Logbook_model extends CI_Model {
     }
 
     public function get_entity($dxcc){
-      $sql = "select name from dxcc_entities where adif = " . $dxcc;
+      $sql = "select name, cqz, lat, `long` from dxcc_entities where adif = " . $dxcc;
       $query = $this->db->query($sql);
 
       if ($query->result() > 0){
           $row = $query->row_array();
-          return $row['name'];
+          return $row;
       }
       return '';
     }
@@ -1810,6 +1843,52 @@ class Logbook_model extends CI_Model {
     
       return 0;
     }
+
+    /*
+     * This function returns the the whole list of dxcc_entities used in various places
+     */
+    function fetchDxcc() {
+        $sql = "select adif, prefix, name, date(end) Enddate, date(start) Startdate from dxcc_entities";
+
+        $sql .= ' order by prefix';
+        $query = $this->db->query($sql);
+
+        return $query->result();
+    }
+
+    /*
+     * This function returns the whole list of iotas used in various places
+     */
+    function fetchIota() {
+        $sql = "select tag, name from iota";
+
+        $sql .= ' order by tag';
+        $query = $this->db->query($sql);
+
+        return $query->result();
+    }
+
+    /*
+     * This function tries to locate the correct station_id used for importing QSOs from the downloaded LoTWreport
+     * $station_callsign is the call listed for the qso in lotwreport
+     * $my_gridsquare is the gridsquare listed for the qso in lotwreport
+     * Returns station_id if found
+     */
+    function find_correct_station_id($station_callsign, $my_gridsquare) {
+        $sql = 'select station_id from station_profile
+            where station_callsign = "' . $station_callsign . '" and station_gridsquare like "%' . substr($my_gridsquare,0, 4) . '%"';
+
+        $query = $this->db->query($sql);
+
+        $result = $query->row();
+
+        if ($result) {
+            return $result->station_id;
+        }
+        else {
+            return null;
+        }
+    }
     
 }
 
@@ -1818,6 +1897,4 @@ function validateADIFDate($date, $format = 'Ymd')
   $d = DateTime::createFromFormat($format, $date);
   return $d && $d->format($format) == $date;
 }
-
-
 ?>
