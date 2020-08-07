@@ -20,21 +20,37 @@
     <link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/css/query-builder.default.min.css" />
 	<?php } ?>
 
-	<?php if ($this->uri->segment(1) == "notes" && ($this->uri->segment(2) == "add" || $this->uri->segment(2) == "edit") ) { ?>
-	<link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/plugins/quill/quill.snow.css" />
-	<?php } ?>
+<?php if ($this->uri->segment(1) == "notes" && ($this->uri->segment(2) == "add" || $this->uri->segment(2) == "edit") ) { ?>
+<link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/plugins/quill/quill.snow.css" />
+<?php } ?>
 
-	<?php if ($this->uri->segment(1) == "qrz") { ?>
-	<link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/css/loading.min.css" />
-	<link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/css/ldbtn.min.css" />
-	<?php } ?>
+<?php if ($this->uri->segment(1) == "qso") { ?>
+<link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/plugins/select2/css/select2.min.css" />
+<?php } ?>
+  <?php if ($this->uri->segment(1) == "adif") { ?>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/css/tempusdominus-bootstrap-4.min.css" />
+  <?php } ?>
+    <!--<link rel="icon" href="<php echo base_url(); ?>/favicon.ico">-->
+    
+    <link rel="apple-touch-icon" sizes="57x57" href="<?php echo base_url(); ?>/favicons/apple-icon-57x57.png">
+	<link rel="apple-touch-icon" sizes="60x60" href="<?php echo base_url(); ?>/favicons/apple-icon-60x60.png">
+	<link rel="apple-touch-icon" sizes="72x72" href="<?php echo base_url(); ?>/favicons/apple-icon-72x72.png">
+	<link rel="apple-touch-icon" sizes="76x76" href="<?php echo base_url(); ?>/favicons/apple-icon-76x76.png">
+	<link rel="apple-touch-icon" sizes="114x114" href="<?php echo base_url(); ?>/favicons/apple-icon-114x114.png">
+	<link rel="apple-touch-icon" sizes="120x120" href="<?php echo base_url(); ?>/favicons/apple-icon-120x120.png">
+	<link rel="apple-touch-icon" sizes="144x144" href="<?php echo base_url(); ?>/favicons/apple-icon-144x144.png">
+	<link rel="apple-touch-icon" sizes="152x152" href="<?php echo base_url(); ?>/favicons/apple-icon-152x152.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="<?php echo base_url(); ?>/favicons/apple-icon-180x180.png">
+	<link rel="icon" type="image/png" sizes="192x192"  href="<?php echo base_url(); ?>/favicons/android-icon-192x192.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="<?php echo base_url(); ?>/favicons/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="96x96" href="<?php echo base_url(); ?>/favicons/favicon-96x96.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="<?php echo base_url(); ?>/favicons/favicon-16x16.png">
+	<link rel="manifest" href="<?php echo base_url(); ?>/favicons/manifest.json">
+	<meta name="msapplication-TileColor" content="#ffffff">
+	<meta name="msapplication-TileImage" content="<?php echo base_url(); ?>/favicons/ms-icon-144x144.png">
+	<meta name="theme-color" content="#ffffff">
 
- 	<?php if ($this->uri->segment(1) == "adif") { ?>
-  	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/datepicker.css" />
-  	<?php } ?>
-    <link rel="icon" href="<?php echo base_url(); ?>/favicon.ico">
-
-    <title><?php if(isset($page_title)) { echo $page_title; } ?> - Cloudlog</title>
+    <title><?php if(isset($page_title)) { echo $page_title; } ?> - McBainSite-Cloudlog</title>
   </head>
   <body>
 
@@ -106,17 +122,13 @@
 					
 					<div class="dropdown-divider"></div>
 					
-					<a class="dropdown-item" href="<?php echo site_url('lotw/import');?>" title="LoTW Import"><i class="fas fa-sync"></i> LoTW Import</a>
+					<a class="dropdown-item" href="<?php echo site_url('lotw/import');?>" title="LoTW Import/Export"><i class="fas fa-sync"></i> LoTW Import/Export</a>
 					
 					<div class="dropdown-divider"></div>
 					
 					<a class="dropdown-item" href="<?php echo site_url('eqsl/import');?>" title="eQSL Import/Export"><i class="fas fa-sync"></i> eQSL Import/Export</a>
 					
 					<div class="dropdown-divider"></div>
-
-                    <a class="dropdown-item" href="<?php echo site_url('qrz/export');?>" title="QRZ.com Export"><i class="fas fa-sync"></i> QRZ.com Export</a>
-
-                    <div class="dropdown-divider"></div>
 					
 					<a class="dropdown-item" href="<?php echo site_url('qslprint');?>" title="Print Requested QSLs"><i class="fas fa-print"></i> Print Requested QSLs</a>
 
@@ -164,10 +176,6 @@
 				<div class="dropdown-divider"></div>
 				
 				<a class="dropdown-item" target="_blank" href="https://github.com/magicbug/Cloudlog/wiki" title="Help"><i class="fas fa-question"></i> Help</a>
-				
-				<div class="dropdown-divider"></div>
-
-				<a class="dropdown-item" target="_blank" href="https://forum.cloudlog.co.uk" title="Forum"><i class="fas fa-question"></i> Forum</a>
 				
 				<div class="dropdown-divider"></div>
 				
