@@ -9,6 +9,10 @@
     <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/leaflet/leaflet.js"></script>
     <script type="text/javascript" src="<?php echo base_url() ;?>assets/js/radiohelpers.js"></script>
 
+<script type="text/javascript">
+  var icon_dot_url = "<?php echo base_url();?>assets/images/dot.png";
+</script>
+
     <?php if ($this->uri->segment(1) == "adif") { ?>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/js/tempusdominus-bootstrap-4.min.js"></script>
@@ -269,6 +273,100 @@ $(document).on('keypress',function(e) {
 
 <?php if ($this->uri->segment(1) == "qso") { ?>
 
+<script type="text/javascript">
+$( document ).ready(function() {
+  /*
+    Populate the Satellite Names Field on the QSO Panel
+  */
+  $.getJSON( "<?php echo base_url();?>assets/json/satellite_data.json", function( data ) {
+
+    // Build the options array
+    var items = [];
+    $.each( data, function( key, val ) {
+      items.push(
+        '<option value="' + key + '">' + key + '</option>'
+        );
+    });
+
+    // Add to the datalist
+    $('.satellite_names_list').append(items.join( "" ));
+  });
+
+});
+
+var selected_sat;
+var selected_sat_mode;
+
+$(document).on('change', 'input', function(){
+    var optionslist = $('.satellite_names_list')[0].options;
+    var value = $(this).val();
+    for (var x=0;x<optionslist.length;x++){
+       if (optionslist[x].value === value) {
+          $("#sat_mode").val(""); 
+          $('.satellite_modes_list').find('option').remove().end();
+          selected_sat = value;
+          // get Json file
+          $.getJSON( "<?php echo base_url();?>assets/json/satellite_data.json", function( data ) {
+
+          // Build the options array
+          var sat_modes = [];
+          $.each( data, function( key, val ) {
+            if (key == value) {
+              $.each( val.Modes, function( key1, val2 ) {
+                  //console.log (key1);
+                  sat_modes.push('<option value="' + key1 + '">' + key1 + '</option>');
+              });
+            }
+          });
+
+          // Add to the datalist
+          $('.satellite_modes_list').append(sat_modes.join( "" ));
+
+        });
+       }
+    }
+});
+
+$(document).on('change', 'input', function(){
+    var optionslist = $('.satellite_modes_list')[0].options;
+    var value = $(this).val();
+    for (var x=0;x<optionslist.length;x++){
+       if (optionslist[x].value === value) {
+
+          // Store selected sat mode
+          selected_sat_mode = value;
+
+          // get Json file
+          $.getJSON( "<?php echo base_url();?>assets/json/satellite_data.json", function( data ) {
+
+          // Build the options array
+          var sat_modes = [];
+          $.each( data, function( key, val ) {
+            if (key == selected_sat) {
+              $.each( val.Modes, function( key1, val2 ) {
+                  if(key1 == selected_sat_mode) {
+  
+                    if (val2[0].Uplink_Mode == "LSB" || val2[0].Uplink_Mode == "USB") {
+                      $("#mode").val("SSB");  
+                    } else {
+                      $("#mode").val(val2[0].Uplink_Mode);  
+                    }
+                    $("#band").val(frequencyToBand(val2[0].Uplink_Freq));
+                    $("#frequency").val(val2[0].Uplink_Freq);  
+                    $("#frequency_rx").val(val2[0].Downlink_Freq); 
+                    $("#selectPropagation").val('SAT');
+                  }
+              });
+            }
+          });
+
+        });
+       }
+    }
+});
+
+</script>
+
 <script>
   var markers = L.layerGroup();
   var mymap = L.map('qsomap').setView([51.505, -0.09], 13);
@@ -433,9 +531,15 @@ $(document).on('keypress',function(e) {
 
                 // Set Map to Lat/Long it locator is not empty
                 if($('#locator').val() == "") {
+                    var redIcon = L.icon({
+                        iconUrl: icon_dot_url,
+                        iconSize:     [18, 18], // size of the icon
+                    });
+
                     markers.clearLayers();
-                    var marker = L.marker([result.dxcc.lat, result.dxcc.long]);
-                    mymap.panTo([result.dxcc.lat, result.dxcc.long], 8);
+                    var marker = L.marker([result.dxcc.lat, result.dxcc.long], {icon: redIcon});
+					          mymap.setZoom(8);
+					          mymap.panTo([result.dxcc.lat, result.dxcc.long]);
                     markers.addLayer(marker).addTo(mymap);
                 }
             }
@@ -485,6 +589,70 @@ $(document).on('keypress',function(e) {
             })
         }
     }
+<?php if ($this->config->item('qso_auto_qth')) { ?>
+    $('#qth').focusout(function() {
+    	if ($('#locator').val() === '') {
+			var lat = 0;
+			var lon = 0;
+			$.ajax({
+				async: false,
+				type: 'GET',
+				dataType: "json",
+				url: "https://nominatim.openstreetmap.org/search/?city=" + $(this).val() + "&format=json&addressdetails=1&limit=1",
+				data: {},
+				success: function (data) {
+					if (typeof data[0].lat !== 'undefined') {
+						lat = parseFloat(data[0].lat);
+					}
+					if (typeof data[0].lon !== 'undefined') {
+						lon = parseFloat(data[0].lon);
+					}
+				},
+			});
+			if (lat !== 0 && lon !== 0) {
+				var qthloc = LatLng2Loc(lat, lon, 10);
+				if (qthloc.length > 0) {
+					$('#locator').val(qthloc.substr(0, 6)).trigger('focusout');
+				}
+			}
+		}
+	});
+
+	LatLng2Loc = function(y, x, num) {
+		if (x < -180) {
+			x = x + 360;
+		}
+		if (x > 180) {
+			x = x - 360;
+		}
+		var yqth, yi, yk, ydiv, yres, ylp, y;
+		var ycalc = new Array(0, 0, 0);
+		var yn = new Array(0, 0, 0, 0, 0, 0, 0);
+
+		var ydiv_arr = new Array(10, 1, 1 / 24, 1 / 240, 1 / 240 / 24);
+		ycalc[0] = (x + 180) / 2;
+		ycalc[1] = y + 90;
+
+		for (yi = 0; yi < 2; yi++) {
+			for (yk = 0; yk < 5; yk++) {
+				ydiv = ydiv_arr[yk];
+				yres = ycalc[yi] / ydiv;
+				ycalc[yi] = yres;
+				if (ycalc[yi] > 0) ylp = Math.floor(yres); else ylp = Math.ceil(yres);
+				ycalc[yi] = (ycalc[yi] - ylp) * ydiv;
+				yn[2 * yk + yi] = ylp;
+			}
+		}
+
+		var qthloc = "";
+		if (num >= 2) qthloc += String.fromCharCode(yn[0] + 0x41) + String.fromCharCode(yn[1] + 0x41);
+		if (num >= 4) qthloc += String.fromCharCode(yn[2] + 0x30) + String.fromCharCode(yn[3] + 0x30);
+		if (num >= 6) qthloc += String.fromCharCode(yn[4] + 0x41) + String.fromCharCode(yn[5] + 0x41);
+		if (num >= 8) qthloc += ' ' + String.fromCharCode(yn[6] + 0x30) + String.fromCharCode(yn[7] + 0x30);
+		if (num >= 10) qthloc += String.fromCharCode(yn[8] + 0x61) + String.fromCharCode(yn[9] + 0x61);
+		return qthloc;
+	}
+	<?php } ?>
 
     $("#callsign").focusout(function() {
 
@@ -563,15 +731,20 @@ $(document).on('keypress',function(e) {
               $('#ituz').val(result.dxcc.ituz);
 
 
+              var redIcon = L.icon({
+                iconUrl: icon_dot_url,
+                iconSize:     [18, 18], // size of the icon
+              });
 
               // Set Map to Lat/Long
               markers.clearLayers();
+				      mymap.setZoom(8);
               if (typeof result.latlng !== "undefined" && result.latlng !== false) {
-                var marker = L.marker([result.latlng[0], result.latlng[1]]);
-                mymap.panTo([result.latlng[0], result.latlng[1]], 8);
+                var marker = L.marker([result.latlng[0], result.latlng[1]], {icon: redIcon});
+                mymap.panTo([result.latlng[0], result.latlng[1]]);
               } else {
-                var marker = L.marker([result.dxcc.lat, result.dxcc.long]);
-                mymap.panTo([result.dxcc.lat, result.dxcc.long], 8);
+                var marker = L.marker([result.dxcc.lat, result.dxcc.long], {icon: redIcon});
+                mymap.panTo([result.dxcc.lat, result.dxcc.long]);
               }
 
               markers.addLayer(marker).addTo(mymap);
@@ -737,14 +910,20 @@ $(document).on('keypress',function(e) {
           }
         }
 
-        if(qra_input.length >= 4) {
+        if(qra_input.length >= 4 && $(this).val().length > 0) {
           $.getJSON('logbook/qralatlngjson/' + $(this).val(), function(result)
           {
             // Set Map to Lat/Long
             markers.clearLayers();
             if (typeof result !== "undefined") {
-              var marker = L.marker([result[0], result[1]]);
-              mymap.setView([result[0], result[1]], 8);
+              var redIcon = L.icon({
+                        iconUrl: icon_dot_url,
+                        iconSize:     [18, 18], // size of the icon
+                    });
+
+              var marker = L.marker([result[0], result[1]], {icon: redIcon});
+              mymap.setZoom(8);
+              mymap.panTo([result[0], result[1]]);
             }
             markers.addLayer(marker).addTo(mymap);
           })
@@ -760,7 +939,7 @@ $(document).on('keypress',function(e) {
     });
 
     function setRst(mode) {
-        if(mode == 'JT65' || mode == 'JT65B' || mode == 'JT6C' || mode == 'JTMS' || mode == 'ISCAT' || mode == 'MSK144' || mode == 'JTMSK' || mode == 'QRA64' || mode == 'FT8' || mode == 'FT4' || mode == 'JS8' || mode == 'JT9' || mode == 'JT9-1'){
+        if(mode == 'JT65' || mode == 'JT65B' || mode == 'JT6C' || mode == 'JTMS' || mode == 'ISCAT' || mode == 'MSK144' || mode == 'JTMSK' || mode == 'QRA64' || mode == 'FT8' || mode == 'FT4' || mode == 'JS8' || mode == 'JT9' || mode == 'JT9-1' || mode == 'ROS'){
             $('#rst_sent').val('-5');
             $('#rst_recv').val('-5');
         } else if (mode == 'FSK441' || mode == 'JT6M') {
@@ -812,6 +991,20 @@ $(document).on('keypress',function(e) {
           }
           $("#sat_name").val(data.satname);  
           $("#sat_mode").val(data.satmode);  
+
+          // Display CAT Timeout warnng based on the figure given in the config file
+            var minutes = Math.floor(<?php echo $this->config->item('cat_timeout_interval'); ?> / 60);
+
+            if(data.updated_minutes_ago > minutes) {
+              if($('.radio_timeout_error').length == 0) {
+                $('.qso_panel').prepend('<div class="alert alert-danger radio_timeout_error" role="alert">Radio Connection Error: ' + $('select.radios option:selected').text() + ' data is ' + data.updated_minutes_ago + ' minutes old.</div>');  
+              } else {
+                $('.radio_timeout_error').text('Radio Connection Error: ' + $('select.radios option:selected').text() + ' data is ' + data.updated_minutes_ago + ' minutes old.');    
+              }
+            } else {
+              $(".radio_timeout_error" ).remove();
+            }
+
       });
     }
   };
@@ -831,6 +1024,11 @@ $(document).on('keypress',function(e) {
         $("#frequency_rx").val(""); 
         $("#selectPropagation").val($("#selectPropagation option:first").val());
       }
+
+      if ($(".radios option:selected").text() == "None") {
+        $(".radio_timeout_error" ).remove();
+      }
+
   });
 
 <?php } ?>
@@ -858,7 +1056,13 @@ $(document).on('keypress',function(e) {
     id: 'mapbox.streets'
   }).addTo(mymap);
 
-  L.marker([lat,long]).addTo(mymap)
+
+  var redIcon = L.icon({
+      iconUrl: icon_dot_url,
+      iconSize:     [18, 18], // size of the icon
+  });
+
+  L.marker([lat,long], {icon: redIcon}).addTo(mymap)
     .bindPopup(callsign);
 
   mymap.on('click', onMapClick);
@@ -1176,5 +1380,35 @@ $(document).ready(function(){
         </script>
     <?php } ?>
 
+    <?php if ($this->uri->segment(1) == "qrz") { ?>
+        <script>
+            function ExportQrz(station_id) {
+                $(".ld-ext-right").addClass('running');
+                $(".ld-ext-right").prop('disabled', true);
+                var baseURL= "<?php echo base_url();?>";
+                $.ajax({
+                    url: baseURL + 'index.php/qrz/upload_station',
+                    type: 'post',
+                    data: {'station_id': station_id},
+                    success: function (data) {
+                        $(".ld-ext-right").removeClass('running');
+                        $(".ld-ext-right").prop('disabled', false);
+                        if (data.status == 'OK') {
+                            $.each(data.info, function(index, value){
+                                $('#modcount'+value.station_id).html(value.modcount);
+                                $('#notcount'+value.station_id).html(value.notcount);
+                                $('#totcount'+value.station_id).html(value.totcount);
+                            });
+                            $(".card-body").append('<div class="alert alert-success" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>' + data.infomessage + '</div>');
+                        }
+                        else {
+                            $(".card-body").append('<div class="alert alert-danger" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>' + data.info + '</div>');
+                        }
+                    }
+                });
+            }
+
+        </script>
+    <?php } ?>
   </body>
 </html>
