@@ -328,7 +328,8 @@ class Logbook_model extends CI_Model {
     // Push qso to qrz if apikey is set
     if ($apikey = $this->exists_qrz_api_key($data['station_id'])) {
         $adif = $this->create_adif_from_data($data);
-        IF ($this->push_qso_to_qrz($apikey, $adif)) {
+        $result = $this->push_qso_to_qrz($apikey, $adif);
+        IF ($result['status'] == 'OK') {
             $data['COL_QRZCOM_QSO_UPLOAD_STATUS'] = 'Y';
             $data['COL_QRZCOM_QSO_UPLOAD_DATE'] = date("Y-m-d H:i:s", strtotime("now"));
         }
@@ -382,14 +383,19 @@ class Logbook_model extends CI_Model {
       $content = curl_exec($ch);
       if ($content){
           if (stristr($content,'RESULT=OK') || stristr($content,'RESULT=REPLACE')) {
-            return true;
+              $result['status'] = 'OK';
+              return $result;
           }
           else {
-            return false;
+              $result['status'] = 'error';
+              $result['message'] = $content;
+              return $result;
           }
       }
       if(curl_errno($ch)){
-          return false;
+          $result['status'] = 'error';
+          $result['message'] = 'Curl error: '. curl_errno($ch);
+          return $result;
       }
       curl_close($ch);
   }
@@ -1285,12 +1291,22 @@ class Logbook_model extends CI_Model {
     }
   }
 
-  function lotw_update($datetime, $callsign, $band, $qsl_date, $qsl_status) {
-    $data = array(
-         'COL_LOTW_QSLRDATE' => $qsl_date,
-         'COL_LOTW_QSL_RCVD' => $qsl_status,
-         'COL_LOTW_QSL_SENT' => 'Y'
-    );
+  function lotw_update($datetime, $callsign, $band, $qsl_date, $qsl_status, $state) {
+    
+    if($state != "") {
+      $data = array(
+           'COL_LOTW_QSLRDATE' => $qsl_date,
+           'COL_LOTW_QSL_RCVD' => $qsl_status,
+           'COL_LOTW_QSL_SENT' => 'Y',
+           'COL_STATE' => $state
+      );
+    } else {
+      $data = array(
+           'COL_LOTW_QSLRDATE' => $qsl_date,
+           'COL_LOTW_QSL_RCVD' => $qsl_status,
+           'COL_LOTW_QSL_SENT' => 'Y'
+      ); 
+    }
 
     $this->db->where('date_format(COL_TIME_ON, \'%Y-%m-%d %H:%i\') = "'.$datetime.'"');
     $this->db->where('COL_CALL', $callsign);
@@ -1550,7 +1566,7 @@ class Logbook_model extends CI_Model {
 
         // Sanitise TX_POWER
         if (isset($record['tx_pwr'])){
-            $tx_pwr = filter_var($record['tx_pwr'],FILTER_SANITIZE_NUMBER_INT);
+            $tx_pwr = filter_var($record['tx_pwr'],FILTER_VALIDATE_FLOAT);
         }else{
             $tx_pwr = NULL;
         }
@@ -1833,7 +1849,6 @@ class Logbook_model extends CI_Model {
                 'COL_QSO_COMPLETE' => (!empty($record['qso_complete'])) ? $record['qso_complete'] : '',
                 'COL_QSO_DATE' => (!empty($record['qso_date'])) ? $record['qso_date'] : null,
                 'COL_QSO_DATE_OFF' => (!empty($record['qso_date_off'])) ? $record['qso_date_off'] : null,
-                'COL_QSO_RANDOM' => (!empty($record['qso_random'])) ? $record['qso_random'] : null,
                 'COL_QTH' => (!empty($record['qth'])) ? $record['qth'] : '',
                 'COL_QTH_INTL' => (!empty($record['qth_intl'])) ? $record['qth_intl'] : '',
                 'COL_REGION' => (!empty($record['region'])) ? $record['region'] : '',
@@ -1854,7 +1869,7 @@ class Logbook_model extends CI_Model {
                 'COL_SOTA_REF' => (!empty($record['sota_ref'])) ? $record['sota_ref'] : '',
                 'COL_SRX' => (!empty($record['srx'])) ? $record['srx'] : null,
                 'COL_SRX_STRING' => (!empty($record['srx_string'])) ? $record['srx_string'] : '',
-                'COL_STATE' => (!empty($record['state'])) ? $record['state'] : '',
+                'COL_STATE' => (!empty($record['state'])) ? strtoupper($record['state']) : '',
                 'COL_STATION_CALLSIGN' => (!empty($record['station_callsign'])) ? $record['station_callsign'] : '',
                 'COL_STX' => (!empty($record['stx'])) ? $record['stx'] : null,
                 'COL_STX_STRING' => (!empty($record['stx_string'])) ? $record['stx_string'] : '',
