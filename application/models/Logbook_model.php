@@ -146,7 +146,7 @@ class Logbook_model extends CI_Model {
       }
 
     if ($this->exists_qrz_api_key($station_id)) {
-        $data['COL_QRZCOM_QSO_UPLOAD_STATUS '] = 'N';
+        $data['COL_QRZCOM_QSO_UPLOAD_STATUS'] = 'N';
     }
 
       $data['COL_MY_CITY'] = strtoupper(trim($station['station_city']));
@@ -465,8 +465,13 @@ class Logbook_model extends CI_Model {
       $adif .= '<cqz:' . strlen($data['COL_CQZ']) . '>' . $data['COL_CQZ'];
       //$adif .= '<ituz:' . strlen($data['COL_ITUZ']) . '>' . $data['COL_ITUZ']; -- not yet implemented
 
-      $adif .= '<lotw_qsl_sent:' . strlen($data['COL_LOTW_QSL_SENT']) . '>' . $data['COL_LOTW_QSL_SENT'];
-      $adif .= '<lotw_qsl_rcvd:' . strlen($data['COL_LOTW_QSL_RCVD']) . '>' . $data['COL_LOTW_QSL_RCVD'];
+      if(isset($data['COL_LOTW_QSL_SENT'])) {
+         $adif .= '<lotw_qsl_sent:' . strlen($data['COL_LOTW_QSL_SENT']) . '>' . $data['COL_LOTW_QSL_SENT'];
+      }
+	  
+      if(isset($data['COL_LOTW_QSL_RCVD'])) {
+         $adif .= '<lotw_qsl_rcvd:' . strlen($data['COL_LOTW_QSL_RCVD']) . '>' . $data['COL_LOTW_QSL_RCVD'];
+      }
 
       if($data['COL_IOTA']) {
         $adif .= '<iota:' . strlen($data['COL_IOTA']) . '>' . $data['COL_IOTA'];
@@ -1528,7 +1533,7 @@ class Logbook_model extends CI_Model {
 
         // Store Band
         if(isset($record['band'])) {
-                $band = $record['band'];
+                $band = strtolower($record['band']);
         } else {
             if (isset($record['freq'])){
               if($freq != "0") {
@@ -2204,7 +2209,37 @@ class Logbook_model extends CI_Model {
             return null;
         }
     }
-    
+ 
+  function get_lotw_qsos_to_upload($station_id, $start_date, $end_date) {
+
+    $this->db->select('COL_PRIMARY_KEY,COL_CALL, COL_BAND, COL_BAND_RX, COL_TIME_ON, COL_RST_RCVD, COL_RST_SENT, COL_MODE, COL_FREQ, COL_FREQ_RX, COL_GRIDSQUARE, COL_SAT_NAME, COL_PROP_MODE, COL_LOTW_QSL_SENT, station_id');
+
+    $this->db->where("station_id", $station_id);
+    $this->db->where('COL_LOTW_QSL_SENT !=', "Y");
+    $this->db->where('COL_PROP_MODE !=', "INTERNET");
+    $this->db->where('COL_TIME_ON >=', $start_date);
+    $this->db->where('COL_TIME_ON <=', $end_date);
+    $this->db->order_by("COL_TIME_ON", "desc");
+
+    $query = $this->db->get($this->config->item('table_name'));
+
+    return $query;
+  }
+
+  function mark_lotw_sent($qso_id) {
+
+      $data = array(
+           'COL_LOTW_QSLSDATE' => date("Y-m-d H:i:s"),
+           'COL_LOTW_QSL_SENT' => 'Y',
+      );
+
+
+    $this->db->where('COL_PRIMARY_KEY', $qso_id);
+
+    $this->db->update($this->config->item('table_name'), $data);
+
+    return "Updated";
+  }
 }
 
 function validateADIFDate($date, $format = 'Ymd')
