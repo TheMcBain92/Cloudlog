@@ -29,6 +29,10 @@
 	<link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/css/ldbtn.min.css" />
 	<?php } ?>
 
+      <?php if ($this->uri->segment(2) == "was") { ?>
+          <link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/js/bootstrapdialog/css/bootstrap-dialog.min.css" />
+      <?php } ?>
+
  	<?php if ($this->uri->segment(1) == "adif") { ?>
   	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/datepicker.css" />
   	<?php } ?>
@@ -128,11 +132,11 @@
 					
 					<div class="dropdown-divider"></div>
 					
-					<a class="dropdown-item" href="<?php echo site_url('lotw');?>" title="LoTW Import"><i class="fas fa-sync"></i> LoTW</a>
+					<a class="dropdown-item" href="<?php echo site_url('lotw');?>" title="LoTW Import"><i class="fas fa-sync"></i> Logbook of the World</a>
 					
 					<div class="dropdown-divider"></div>
 					
-					<a class="dropdown-item" href="<?php echo site_url('eqsl/import');?>" title="eQSL Import/Export"><i class="fas fa-sync"></i> eQSL Import/Export</a>
+					<a class="dropdown-item" href="<?php echo site_url('eqsl/import');?>" title="eQSL Import/Export"><i class="fas fa-sync"></i> eQSL</a>
 					
 					<div class="dropdown-divider"></div>
 
