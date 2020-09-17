@@ -1,61 +1,34 @@
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="<?php echo base_url(); ?>assets/js/jquery-3.3.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-    <script src="<?php echo base_url(); ?>assets/js/jquery.fancybox.min.js"></script>
-    <script src="<?php echo base_url(); ?>assets/js/bootstrap.bundle.js"></script>
-    <script src="<?php echo base_url(); ?>assets/js/jquery.jclock.js"></script>
-
-    <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/leaflet/leaflet.js"></script>
-    <script type="text/javascript" src="<?php echo base_url() ;?>assets/js/radiohelpers.js"></script>
+<!-- General JS Files used across Cloudlog -->
+<script src="<?php echo base_url(); ?>assets/js/jquery-3.3.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+<script src="<?php echo base_url(); ?>assets/js/jquery.fancybox.min.js"></script>
+<script src="<?php echo base_url(); ?>assets/js/bootstrap.bundle.js"></script>
+<script src="<?php echo base_url(); ?>assets/js/jquery.jclock.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/leaflet/leaflet.js"></script>
+<script type="text/javascript" src="<?php echo base_url() ;?>assets/js/radiohelpers.js"></script>
 
 <script type="text/javascript">
+  /*
+  *
+  * Define global javascript variables
+  *
+  */
+  var base_url = "<?php echo base_url(); ?>"; // Base URL
+  var site_url = "<?php echo site_url(); ?>"; // Site URL
   var icon_dot_url = "<?php echo base_url();?>assets/images/dot.png";
 </script>
 
-    <?php if ($this->uri->segment(1) == "adif") { ?>
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/js/tempusdominus-bootstrap-4.min.js"></script>
-        <script type="text/javascript">
-            $(function () {
-                $('#datetimepicker1').datetimepicker({
-                    format: 'DD/MM/YYYY',
-                });
-            });
-
-            $(function () {
-                $('#datetimepicker2').datetimepicker({
-                    format: 'DD/MM/YYYY',
-                });
-            });
-
-            $(function () {
-                $('#datetimepicker3').datetimepicker({
-                    format: 'DD/MM/YYYY',
-                });
-            });
-
-            $(function () {
-                $('#datetimepicker4').datetimepicker({
-                    format: 'DD/MM/YYYY',
-                });
-            });
-        </script>
-    <?php } ?>
+<?php if ($this->uri->segment(1) == "adif") { ?>
+    <!-- Javascript used for ADIF Import and Export Areas -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/js/tempusdominus-bootstrap-4.min.js"></script>
+    <script src="<?php echo base_url() ;?>assets/js/sections/adif.js"></script>
+<?php } ?>
 
 <?php if ($this->uri->segment(1) == "notes" && ($this->uri->segment(2) == "add" || $this->uri->segment(2) == "edit") ) { ?>
+    <!-- Javascript used for Notes Area -->
     <script src="<?php echo base_url() ;?>assets/plugins/quill/quill.min.js"></script>
-    
-    <script>
-      var quill = new Quill('#quillArea', { 
-        placeholder: 'Compose an epic...',
-        theme: 'snow'
-      });
-
-      $("#notes_add").on("submit",function(){
-        $("#hiddenArea").val(quill.root.innerHTML);
-      })
-    </script>
+    <script src="<?php echo base_url() ;?>assets/js/sections/notes.js"></script>
 <?php } ?>
 
 <?php if ($this->uri->segment(1) == "search" && $this->uri->segment(2) == "filter") { ?>
