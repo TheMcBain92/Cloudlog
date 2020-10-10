@@ -6,7 +6,7 @@
 <script src="<?php echo base_url(); ?>assets/js/jquery.jclock.js"></script>
 <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/leaflet/leaflet.js"></script>
 <script type="text/javascript" src="<?php echo base_url() ;?>assets/js/radiohelpers.js"></script>
-
+<script src="<?php echo base_url(); ?>assets/js/bootstrapdialog/js/bootstrap-dialog.min.js"></script>
 <script type="text/javascript">
   /*
   *
@@ -29,6 +29,10 @@
     <!-- Javascript used for Notes Area -->
     <script src="<?php echo base_url() ;?>assets/plugins/quill/quill.min.js"></script>
     <script src="<?php echo base_url() ;?>assets/js/sections/notes.js"></script>
+<?php } ?>
+
+<?php if ($this->uri->segment(1) == "awards") { ?>
+    <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/datatables.min.js"></script>
 <?php } ?>
 
 <?php if ($this->uri->segment(1) == "search" && $this->uri->segment(2) == "filter") { ?>
@@ -86,8 +90,7 @@ $(".search-results-box").hide();
           } else {
             band = item.COL_BAND;
           }
-
-          var callsign = '<a data-fancybox data-type="iframe" data-src="<?php echo site_url('logbook/view');?>/' + item.COL_PRIMARY_KEY + '" data-src="" href="javascript:;">' + item.COL_CALL + '</a>';
+          var callsign = '<a href="javascript:displayQso(' + item.COL_PRIMARY_KEY + ');" >' + item.COL_CALL + '</a>';
           if (item.COL_SUBMODE == '' || item.COL_SUBMODE == null) {
             $('#results').append('<tr class="qso"><td>' + item.COL_TIME_ON + '</td><td>' + callsign + '</td><td>' + item.COL_MODE + '</td><td>' + item.COL_RST_SENT + '</td><td>' + item.COL_RST_RCVD + '</td><td>' + band + '</td><td>' + item.COL_COUNTRY + '</td><td></td></tr>');
           }
@@ -1410,8 +1413,6 @@ $(document).ready(function(){
         </script>
     <?php } ?>
 
-
-    <script src="<?php echo base_url(); ?>assets/js/bootstrapdialog/js/bootstrap-dialog.min.js"></script>
         <script>
             function displayQso(id) {
                 var baseURL= "<?php echo base_url();?>";
@@ -1431,7 +1432,7 @@ $(document).ready(function(){
                                 var lat = $("#lat").text();
                                 var long = $("#long").text();
                                 var callsign = $("#callsign").text();
-                                var mymap = L.map('map').setView([lat,long], 5);
+                                var mymap = L.map('mapqso').setView([lat,long], 5);
 
                                 L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
                                     maxZoom: 18,
@@ -1455,18 +1456,31 @@ $(document).ready(function(){
                     }
                 });
             }
+            </script>
 
-    <?php if ($this->uri->segment(2) == "dxcc") { ?>
+
+<?php if ($this->uri->segment(2) == "dxcc") { ?>
+<script>
+    $('.tabledxcc').DataTable({
+        "pageLength": 25,
+        responsive: false,
+        ordering: false,
+        "scrollY":        "400px",
+        "scrollCollapse": true,
+        "paging":         false,
+        "scrollX": true
+    });
 
         function displayDxccContacts(country, band) {
-            var baseURL= "<?php echo base_url();?>";
+            var baseURL = "<?php echo base_url();?>";
             $.ajax({
                 url: baseURL + 'index.php/awards/dxcc_details_ajax',
                 type: 'post',
-                data: {'Country': country,
+                data: {
+                    'Country': country,
                     'Band': band
                 },
-                success: function(html) {
+                success: function (html) {
                     BootstrapDialog.show({
                         title: 'QSO Data',
                         size: BootstrapDialog.SIZE_WIDE,
@@ -1483,10 +1497,20 @@ $(document).ready(function(){
                 }
             });
         }
-
+ </script>
     <?php } ?>
 
-            <?php if ($this->uri->segment(2) == "vucc_band") { ?>
+<?php if ($this->uri->segment(2) == "vucc_band") { ?>
+    <script>
+    $('.tablevucc').DataTable({
+        "pageLength": 25,
+        responsive: false,
+        ordering: false,
+        "scrollY":        "400px",
+        "scrollCollapse": true,
+        "paging":         false,
+        "scrollX": true
+    });
 
             function displayVuccContacts(gridsquare, band) {
                 var baseURL= "<?php echo base_url();?>";
@@ -1513,12 +1537,12 @@ $(document).ready(function(){
                     }
                 });
             }
+    </script>
+<?php } ?>
 
-            <?php } ?>
 
-
-        <?php if ($this->uri->segment(2) == "dok") { ?>
-
+<?php if ($this->uri->segment(2) == "dok") { ?>
+    <script>
         function displayDokContacts(dok, band) {
             var baseURL= "<?php echo base_url();?>";
             $.ajax({
@@ -1544,10 +1568,21 @@ $(document).ready(function(){
                 }
             });
         }
+    </script>
+<?php } ?>
 
-        <?php } ?>
+<?php if ($this->uri->segment(2) == "iota") { ?>
+    <script>
 
-        <?php if ($this->uri->segment(2) == "iota") { ?>
+        $('.tableiota').DataTable({
+            "pageLength": 25,
+            responsive: false,
+            ordering: false,
+            "scrollY":        "400px",
+            "scrollCollapse": true,
+            "paging":         false,
+            "scrollX": true
+        });
 
         function displayIotaContacts(iota, band) {
             var baseURL= "<?php echo base_url();?>";
@@ -1574,11 +1609,12 @@ $(document).ready(function(){
                 }
             });
         }
+    </script>
 
-        <?php } ?>
+<?php } ?>
 
-            <?php if ($this->uri->segment(2) == "cq") { ?>
-
+<?php if ($this->uri->segment(2) == "cq") { ?>
+    <script>
             function displayCqContacts(cqzone, band) {
                 var baseURL= "<?php echo base_url();?>";
                 $.ajax({
@@ -1604,10 +1640,11 @@ $(document).ready(function(){
                     }
                 });
             }
+    </script>
+<?php } ?>
 
-            <?php } ?>
-
-    <?php if ($this->uri->segment(2) == "was") { ?>
+<?php if ($this->uri->segment(2) == "was") { ?>
+    <script>
         function displayWasContacts(was, band) {
             var baseURL= "<?php echo base_url();?>";
             $.ajax({
@@ -1633,8 +1670,10 @@ $(document).ready(function(){
                 }
             });
         }
-    <?php } ?>
+    </script>
+<?php } ?>
 
+<script>
         function qsl_rcvd(id, method) {
             var baseURL= "<?php echo base_url();?>";
             $.ajax({
@@ -1716,11 +1755,41 @@ $(document).ready(function(){
                 success: function (dataofconfirm) {
                     $(".edit-dialog").modal('hide');
                     $(".qso-dialog").modal('hide');
-                    location.reload();
+                    <?php if ($this->uri->segment(1) != "search" && $this->uri->segment(2) != "filter") { ?>location.reload();<?php } ?>
                 }
             });
         }
         </script>
+    <?php if ($this->uri->segment(1) == "timeline") { ?>
+        <script>
+            function displayTimelineContacts(adif, band) {
+                var baseURL= "<?php echo base_url();?>";
+                $.ajax({
+                    url: baseURL + 'index.php/timeline/details',
+                    type: 'post',
+                    data: {'Adif': adif,
+                        'Band': band
+                    },
+                    success: function(html) {
+                        BootstrapDialog.show({
+                            title: 'QSO Data',
+                            size: BootstrapDialog.SIZE_WIDE,
+                            cssClass: 'qso-was-dialog',
+                            nl2br: false,
+                            message: html,
+                            buttons: [{
+                                label: 'Close',
+                                action: function (dialogItself) {
+                                    dialogItself.close();
+                                }
+                            }]
+                        });
+                    }
+                });
+            }
+        </script>
+        <?php } ?>
+
 
   </body>
 </html>

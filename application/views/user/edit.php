@@ -25,7 +25,7 @@
 
 	<br>
 	<div class="row">
-	    <div class="col">
+	    <div class="col-md">
 	    	<div class="card">
 		    	<div class="card-header">
 				   	 Account Information
@@ -54,7 +54,7 @@
 			</div>
 	    </div>
 
-	    <div class="col">
+	    <div class="col-md">
 	    	<div class="card">
 		    	<div class="card-header">
 				   	 Roles
@@ -80,12 +80,31 @@
 				</div>
 			</div>
 	    </div>
+
+        <div class="col-md">
+            <div class="card">
+                <div class="card-header">
+                    Theme
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>Stylesheet</label>
+
+                        <select class="custom-select" id="user_stylesheet" name="user_stylesheet" required>
+                            <option value='bootstrap.min.css' <?php if($user_stylesheet == "bootstrap.min.css") { echo "selected=\"selected\""; } ?>>Standard theme</option>
+                            <option value='bootstrap-dark.css' <?php if($user_stylesheet == "bootstrap-dark.css") { echo "selected=\"selected\""; } ?>>Dark theme</option>
+                            <option value='bootstrap-blue.css' <?php if($user_stylesheet == "bootstrap-blue.css") { echo "selected=\"selected\""; } ?>>Blue theme</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
 	</div>
 
 	<br>
 	<div class="row">
 	 	<!-- Personal Information -->
-	    <div class="col">
+	    <div class="col-md">
 	    	<div class="card">
 				<div class="card-header">
 			   	 Personal Information
@@ -122,7 +141,7 @@
 			</div>
 	    </div>
 
-	    <div class="col">
+	    <div class="col-md">
 	    	<div class="card">
 				<div class="card-header">
 			   	 Cloudlog Preferences
@@ -164,7 +183,7 @@
 	<br>
 	<div class="row">
 	 	<!-- Logbook of the World -->
-	    <div class="col">
+	    <div class="col-md">
 			<div class="card">
 				<div class="card-header">
 			   	 Logbook of the World
@@ -188,7 +207,7 @@
 	    </div>
 
 	    <!-- eQSL -->
-	    <div class="col">
+	    <div class="col-md">
 			<div class="card">
 				<div class="card-header">
 			   	 eQSL
@@ -215,7 +234,7 @@
 	<br>
 	<div class="row">
 	 	<!-- Logbook of the World -->
-	    <div class="col">
+	    <div class="col-md">
 	    	<div class="card">
 				<div class="card-header">
 			   		Clublog

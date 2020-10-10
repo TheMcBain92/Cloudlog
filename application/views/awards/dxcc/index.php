@@ -2,9 +2,6 @@
 <div class="container">
     <h2><?php echo $page_title; ?></h2>
 
-    <!-- Sub Nav for Awards -->
-
-    <?php $this->load->view("awards/nav_bar")?>
     <form class="form" action="<?php echo site_url('awards/dxcc'); ?>" method="post" enctype="multipart/form-data">
         <fieldset>
 
@@ -115,7 +112,7 @@
     $i = 1;
     if ($dxcc_array) {
         echo '
-                <table class="table-sm table tabledxcc table-bordered table-hover table-striped table-condensed text-center">
+                <table style="width:100%" class="table-sm table tabledxcc table-bordered table-hover table-striped table-condensed text-center">
                     <thead>
                     <tr>
                         <td>#</td>

@@ -6,7 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/bootstrap.min.css">
+    <?php if($this->session->userdata('user_stylesheet')) { ?>
+    	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/<?php echo $this->session->userdata('user_stylesheet');?>">
+	<?php } else { ?>
+		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/bootstrap.min.css">
+	<?php } ?>
     <link rel="stylesheet" href="<?php echo base_url(); ?>assets/fontawesome/css/all.css">
 
 	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/jquery.fancybox.min.css" />
@@ -30,6 +34,10 @@
 	<?php } ?>
 
     <link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/js/bootstrapdialog/css/bootstrap-dialog.min.css" />
+
+      <?php if ($this->uri->segment(1) == "awards") { ?>
+          <link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/css/datatables.min.css"/>
+      <?php } ?>
 
  	<?php if ($this->uri->segment(1) == "adif") { ?>
   	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/datepicker.css" />
@@ -58,7 +66,7 @@
   </head>
   <body>
 
-<nav class="navbar sticky-top navbar-expand-lg navbar-light bg-light main-nav">
+<nav class="navbar navbar-expand-lg navbar-light bg-light main-nav">
 <div class="container">
 		<a class="navbar-brand" href="<?php echo site_url(); ?>">Cloudlog</a>
 
@@ -99,8 +107,26 @@
 				</div>
         	</li>
 
-        	<a class="nav-link" href="<?php echo site_url('awards/dxcc');?>">Awards</a>
-
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Awards</a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+        	        <a class="dropdown-item" href="<?php echo site_url('awards/dxcc');?>">DXCC</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="<?php echo site_url('awards/vucc');?>">VUCC</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="<?php echo site_url('awards/was');?>">WAS</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="<?php echo site_url('awards/cq');?>">CQ</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="<?php echo site_url('awards/iota');?>">IOTA</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="<?php echo site_url('awards/wab');?>">WAB</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="<?php echo site_url('awards/sota');?>">SOTA</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="<?php echo site_url('awards/dok');?>">DOK</a>
+                </div>
+            </li>
         	
         	<li class="nav-item dropdown">
 				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Admin</a>
@@ -183,7 +209,7 @@
 			<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Logged in as <?php echo $this->session->userdata('user_callsign'); ?></a>
 			
 			<div class="dropdown-menu" aria-labelledby="navbarDropdown">
-				<a class="dropdown-item" href="<?php echo site_url('user/profile');?>" title="Profile"><i class="far fa-user"></i> Profile</a>
+				<a class="dropdown-item" href="<?php echo site_url('user/edit')."/".$this->session->userdata('user_id'); ?>" title="Profile"><i class="far fa-user"></i> Profile</a>
 				
 				<div class="dropdown-divider"></div>
 				
