@@ -28,16 +28,15 @@
 	<link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/plugins/quill/quill.snow.css" />
 	<?php } ?>
 
-	<?php if ($this->uri->segment(1) == "qrz") { ?>
+	<?php if ($this->uri->segment(1) == "qrz" || $this->uri->segment(1) == "accumulated" || $this->uri->segment(1) == "timeplotter") { ?>
 	<link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/css/loading.min.css" />
 	<link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/css/ldbtn.min.css" />
 	<?php } ?>
 
     <link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/js/bootstrapdialog/css/bootstrap-dialog.min.css" />
+      <link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/css/buttons.dataTables.min.css"/>
 
-      <?php if ($this->uri->segment(1) == "awards") { ?>
-          <link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/css/datatables.min.css"/>
-      <?php } ?>
+  <link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/css/datatables.min.css"/>
 
  	<?php if ($this->uri->segment(1) == "adif") { ?>
   	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/datepicker.css" />
@@ -86,6 +85,8 @@
 							<a class="dropdown-item" href="<?php echo site_url('qso?manual=0');?>" title="Log Live QSOs">Live QSO</a>
 							<div class="dropdown-divider"></div>
 							<a class="dropdown-item" href="<?php echo site_url('qso?manual=1');?>" title="Log QSO made in the past">Post QSO</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="<?php echo site_url('qsl');?>" title="QSL"> View QSL</a>
 						</div>
         	</li>
 
@@ -103,7 +104,11 @@
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="<?php echo site_url('dayswithqso');?>" title="Dayswithqso">Days with QSOs</a>
                     <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="<?php echo site_url('timeline');?>" title="Dxcctimeline">DXCC Timeline</a>
+                    <a class="dropdown-item" href="<?php echo site_url('timeline');?>" title="Timeline">Timeline</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="<?php echo site_url('accumulated');?>" title="Accumulated statistics">Accumulated statistics</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="<?php echo site_url('timeplotter');?>" title="View time when worked">Timeplotter</a>
 				</div>
         	</li>
 
@@ -132,39 +137,39 @@
 				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Admin</a>
 				
 				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
-					<a class="dropdown-item" href="<?php echo site_url('user');?>" title="Accounts"><i class="fas fa-user"></i> Accounts</a>
+					<a class="dropdown-item" href="<?php echo site_url('user');?>" title="Manage user accounts"><i class="fas fa-user"></i> User Accounts</a>
 					
 					<div class="dropdown-divider"></div>
 					
-					<a class="dropdown-item" href="<?php echo site_url('api/help');?>" title="API Interface"><i class="fas fa-key"></i> API</a>
+					<a class="dropdown-item" href="<?php echo site_url('api/help');?>" title="Manage API keys"><i class="fas fa-key"></i> API</a>
 					
 					<div class="dropdown-divider"></div>					
 					
-					<a class="dropdown-item" href="<?php echo site_url('station');?>" title="Station Profiles"><i class="fas fa-home"></i> Station Profiles</a>
+					<a class="dropdown-item" href="<?php echo site_url('station');?>" title="Manage station profiles"><i class="fas fa-home"></i> Station Profiles</a>
 					
 					<div class="dropdown-divider"></div>
 					
-					<a class="dropdown-item" href="<?php echo site_url('mode');?>" title="QSO Modes"><i class="fas fa-broadcast-tower"></i> QSO Modes</a>
+					<a class="dropdown-item" href="<?php echo site_url('mode');?>" title="Manage QSO modes"><i class="fas fa-broadcast-tower"></i> Modes</a>
 					
 					<div class="dropdown-divider"></div>
 					
-					<a class="dropdown-item" href="<?php echo site_url('radio');?>" title="External Radios"><i class="fas fa-broadcast-tower"></i> Radio Interface</a>
+					<a class="dropdown-item" href="<?php echo site_url('radio');?>" title="Interface with one or more radios"><i class="fas fa-broadcast-tower"></i> Radio Interface</a>
 					
 					<div class="dropdown-divider"></div>	
 					
-					<a class="dropdown-item" href="<?php echo site_url('adif');?>" title="ADIF Import/Export"><i class="fas fa-sync"></i> ADIF Import/Export</a>
+					<a class="dropdown-item" href="<?php echo site_url('adif');?>" title="Amateur Data Interchange Format (ADIF) import / export"><i class="fas fa-sync"></i> ADIF Import / Export</a>
 					
 					<div class="dropdown-divider"></div>
 					
-					<a class="dropdown-item" href="<?php echo site_url('lotw');?>" title="LoTW Import"><i class="fas fa-sync"></i> Logbook of the World</a>
+					<a class="dropdown-item" href="<?php echo site_url('lotw');?>" title="Synchronise with Logbook of the World (LotW)"><i class="fas fa-sync"></i> Logbook of the World</a>
 					
 					<div class="dropdown-divider"></div>
 					
-					<a class="dropdown-item" href="<?php echo site_url('eqsl/import');?>" title="eQSL Import/Export"><i class="fas fa-sync"></i> eQSL</a>
+					<a class="dropdown-item" href="<?php echo site_url('eqsl/import');?>" title="eQSL import / export"><i class="fas fa-sync"></i> eQSL Import / Export</a>
 					
 					<div class="dropdown-divider"></div>
 
-                    <a class="dropdown-item" href="<?php echo site_url('qrz/export');?>" title="QRZ.com Export"><i class="fas fa-sync"></i> QRZ Logbook</a>
+                    <a class="dropdown-item" href="<?php echo site_url('qrz/export');?>" title="Upload to QRZ.com logbook"><i class="fas fa-sync"></i> QRZ Logbook</a>
 
                     <div class="dropdown-divider"></div>
 					
@@ -172,7 +177,7 @@
 
 					<div class="dropdown-divider"></div>
 					
-					<a class="dropdown-item" href="<?php echo site_url('backup');?>" title="Backup Cloudlog"><i class="fas fa-save"></i> Backup</a>
+					<a class="dropdown-item" href="<?php echo site_url('backup');?>" title="Backup Cloudlog content"><i class="fas fa-save"></i> Backup</a>
 
 					<div class="dropdown-divider"></div>
 					
@@ -206,10 +211,10 @@
         <ul class="navbar-nav">
         <!-- Logged in As -->
         <li class="nav-item dropdown">
-			<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Logged in as <?php echo $this->session->userdata('user_callsign'); ?></a>
+			<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-user"></i> <?php echo $this->session->userdata('user_callsign'); ?></a>
 			
 			<div class="dropdown-menu" aria-labelledby="navbarDropdown">
-				<a class="dropdown-item" href="<?php echo site_url('user/edit')."/".$this->session->userdata('user_id'); ?>" title="Profile"><i class="far fa-user"></i> Profile</a>
+				<a class="dropdown-item" href="<?php echo site_url('user/edit')."/".$this->session->userdata('user_id'); ?>" title="Account"><i class="fas fa-user"></i> Account</a>
 				
 				<div class="dropdown-divider"></div>
 				

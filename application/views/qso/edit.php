@@ -61,12 +61,17 @@
 	                <input type="text" class="form-control" id="callsign" name="callsign" value="<?php echo $qso->COL_CALL; ?>">
 	            </div>
 
-	            <?php if($qso->COL_FREQ) { ?>
+	            
 	            <div class="form-group">
 	            	<label for="freq">Frequency</label>
 	                <input type="text" class="form-control" id="freq" name="freq" value="<?php echo $qso->COL_FREQ; ?>">
 	            </div>
-	            <?php } ?>
+
+                <div class="form-group">
+                    <label for="freq">RX Frequency</label>
+                    <input type="text" class="form-control" id="freq" name="freq" value="<?php echo $qso->COL_FREQ_RX; ?>">
+                </div>
+	            
                 <div class="form-row">
                     <div class="form-group col-sm-6">
                         <label for="freq">Mode</label>
@@ -506,7 +511,7 @@
 		<input type="hidden" name="id" value="<?php echo $this->uri->segment(3); ?>" />
 
 		<div class="actions">
-			<input type="submit" class="btn btn-success" value="Save changes" onclick="closeME();">
+			<input type="submit" class="btn btn-primary" value="Save changes" onclick="closeME();">
 			<a class="btn btn-danger float-right" href="<?php echo site_url('qso/delete'); ?>/<?php echo $qso->COL_PRIMARY_KEY; ?>" onclick="return confirm('Are you sure you want the delete QSO?');"><i class="fas fa-trash-alt"></i> Delete QSO</a>
 		</div>
 	</div>

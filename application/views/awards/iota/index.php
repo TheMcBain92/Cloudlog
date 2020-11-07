@@ -88,8 +88,8 @@
             <div class="form-group row">
                 <label class="col-md-2 control-label" for="button1id"></label>
                 <div class="col-md-10">
-                    <button id="button2id" type="reset" name="button2id" class="btn btn-danger">Reset</button>
-                    <button id="button1id" type="submit" name="button1id" class="btn btn-success btn-primary">Show</button>
+                    <button id="button2id" type="reset" name="button2id" class="btn btn-warning">Reset</button>
+                    <button id="button1id" type="submit" name="button1id" class="btn btn-primary">Show</button>
                 </div>
             </div>
 
@@ -125,7 +125,37 @@
             }
             echo '</tr>';
         }
-        echo '</tfoot></table></div>';
+
+        echo '</table>
+        <h2>Summary</h2>
+
+        <table class="table-sm tablesummary table table-bordered table-hover table-striped table-condensed text-center">
+        <thead>
+        <tr><td></td>';
+
+        foreach($bands as $band) {
+            echo '<td>' . $band . '</td>';
+        }
+        echo '<td>Total</td></tr>';
+
+        echo '</thead>
+        <tbody>
+
+        <tr><td>Total worked</td>';
+
+        foreach ($iota_summary['worked'] as $dxcc) {      // Fills the table with the data
+            echo '<td style="text-align: center">' . $dxcc . '</td>';
+        }
+
+        echo '</tr><tr>
+        <td>Total confirmed</td>';
+        foreach ($iota_summary['confirmed'] as $dxcc) {      // Fills the table with the data
+            echo '<td style="text-align: center">' . $dxcc . '</td>';
+        }
+
+        echo '</tr>
+        </table>
+        </div>';
 
     }
     else {

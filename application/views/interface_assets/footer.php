@@ -31,9 +31,9 @@
     <script src="<?php echo base_url() ;?>assets/js/sections/notes.js"></script>
 <?php } ?>
 
-<?php if ($this->uri->segment(1) == "awards") { ?>
     <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/datatables.min.js"></script>
-<?php } ?>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/buttons.html5.min.js"></script>
 
 <?php if ($this->uri->segment(1) == "search" && $this->uri->segment(2) == "filter") { ?>
 
@@ -977,9 +977,9 @@ $(document).on('change', 'input', function(){
 
             if(data.updated_minutes_ago > minutes) {
               if($('.radio_timeout_error').length == 0) {
-                $('.qso_panel').prepend('<div class="alert alert-danger radio_timeout_error" role="alert">Radio Connection Error: ' + $('select.radios option:selected').text() + ' data is ' + data.updated_minutes_ago + ' minutes old.</div>');  
+                $('.qso_panel').prepend('<div class="alert alert-danger radio_timeout_error" role="alert">Radio connection timed-out: ' + $('select.radios option:selected').text() + ' data is ' + data.updated_minutes_ago + ' minutes old.</div>');  
               } else {
-                $('.radio_timeout_error').text('Radio Connection Error: ' + $('select.radios option:selected').text() + ' data is ' + data.updated_minutes_ago + ' minutes old.');    
+                $('.radio_timeout_error').text('Radio connection timed-out: ' + $('select.radios option:selected').text() + ' data is ' + data.updated_minutes_ago + ' minutes old.');    
               }
             } else {
               $(".radio_timeout_error" ).remove();
@@ -1259,7 +1259,7 @@ $(document).ready(function(){
       $.ajax({
           url: baseURL+'index.php/distances/get_distances',
           type: 'post',
-          data: {'locator': 'JP50HP', 'band': form.distplot_bands.value},
+          data: {'band': form.distplot_bands.value},
           success: function(tmp) {
               if (tmp.ok == 'OK') {
                   if (!($('#information').length > 0))
@@ -1271,7 +1271,7 @@ $(document).ready(function(){
                           renderTo: 'graphcontainer'
                       },
                       title: {
-                          text: 'Mode distribution'
+                          text: 'Distance distribution'
                       },
                       xAxis: {
                           categories: [],
@@ -1428,7 +1428,7 @@ $(document).ready(function(){
                             message: html,
                             onshown: function(dialog) {
                                 var qsoid = $("#qsoid").text();
-                                $(".editButton").html('<a class="btn btn-success" id="edit_qso" href="javascript:qso_edit('+qsoid+')"><i class="fas fa-edit"></i> Edit QSO</a>');
+                                $(".editButton").html('<a class="btn btn-primary" id="edit_qso" href="javascript:qso_edit('+qsoid+')"><i class="fas fa-edit"></i> Edit QSO</a>');
                                 var lat = $("#lat").text();
                                 var long = $("#long").text();
                                 var callsign = $("#callsign").text();
@@ -1449,7 +1449,6 @@ $(document).ready(function(){
                                 L.marker([lat,long], {icon: redIcon}).addTo(mymap)
                                     .bindPopup(callsign);
 
-                                mymap.on('click', onMapClick);
                             },
                         });
 
@@ -1468,8 +1467,30 @@ $(document).ready(function(){
         "scrollY":        "400px",
         "scrollCollapse": true,
         "paging":         false,
-        "scrollX": true
+        "scrollX": true,
+        dom: 'Bfrtip',
+        buttons: [
+            'csv'
+        ]
     });
+
+    $('.tablesummary').DataTable({
+        info: false,
+        searching: false,
+        ordering: false,
+        "paging":         false,
+        dom: 'Bfrtip',
+        buttons: [
+            'csv'
+        ]
+    });
+
+    // using this to change color of csv-button if dark mode is chosen
+    var background = $('body').css( "background-color");
+
+    if (background != ('rgb(255, 255, 255)')) {
+        $(".buttons-csv").css("color", "white");
+    }
 
         function displayDxccContacts(country, band) {
             var baseURL = "<?php echo base_url();?>";
@@ -1509,8 +1530,19 @@ $(document).ready(function(){
         "scrollY":        "400px",
         "scrollCollapse": true,
         "paging":         false,
-        "scrollX": true
+        "scrollX": true,
+        dom: 'Bfrtip',
+        buttons: [
+            'csv'
+        ]
     });
+
+    // using this to change color of csv-button if dark mode is chosen
+    var background = $('body').css( "background-color");
+
+    if (background != ('rgb(255, 255, 255)')) {
+        $(".buttons-csv").css("color", "white");
+    }
 
             function displayVuccContacts(gridsquare, band) {
                 var baseURL= "<?php echo base_url();?>";
@@ -1581,8 +1613,30 @@ $(document).ready(function(){
             "scrollY":        "400px",
             "scrollCollapse": true,
             "paging":         false,
-            "scrollX": true
+            "scrollX": true,
+            dom: 'Bfrtip',
+            buttons: [
+                'csv'
+            ]
         });
+
+        $('.tablesummary').DataTable({
+            info: false,
+            searching: false,
+            ordering: false,
+            "paging":         false,
+            dom: 'Bfrtip',
+            buttons: [
+                'csv'
+            ]
+        });
+
+        // using this to change color of csv-button if dark mode is chosen
+        var background = $('body').css( "background-color");
+
+        if (background != ('rgb(255, 255, 255)')) {
+            $(".buttons-csv").css("color", "white");
+        }
 
         function displayIotaContacts(iota, band) {
             var baseURL= "<?php echo base_url();?>";
@@ -1615,6 +1669,38 @@ $(document).ready(function(){
 
 <?php if ($this->uri->segment(2) == "cq") { ?>
     <script>
+        $('.tablecq').DataTable({
+            "pageLength": 25,
+            responsive: false,
+            ordering: false,
+            "scrollY":        "400px",
+            "scrollCollapse": true,
+            "paging":         false,
+            "scrollX": true,
+            dom: 'Bfrtip',
+            buttons: [
+                'csv'
+            ]
+        });
+
+        $('.tablesummary').DataTable({
+            info: false,
+            searching: false,
+            ordering: false,
+            "paging":         false,
+            dom: 'Bfrtip',
+            buttons: [
+                'csv'
+            ]
+        });
+
+        // using this to change color of csv-button if dark mode is chosen
+        var background = $('body').css( "background-color");
+
+        if (background != ('rgb(255, 255, 255)')) {
+            $(".buttons-csv").css("color", "white");
+        }
+
             function displayCqContacts(cqzone, band) {
                 var baseURL= "<?php echo base_url();?>";
                 $.ajax({
@@ -1645,6 +1731,38 @@ $(document).ready(function(){
 
 <?php if ($this->uri->segment(2) == "was") { ?>
     <script>
+        $('.tablewas').DataTable({
+            "pageLength": 25,
+            responsive: false,
+            ordering: false,
+            "scrollY":        "400px",
+            "scrollCollapse": true,
+            "paging":         false,
+            "scrollX": true,
+            dom: 'Bfrtip',
+            buttons: [
+                'csv'
+            ]
+        });
+
+        $('.tablesummary').DataTable({
+            info: false,
+            searching: false,
+            ordering: false,
+            "paging":         false,
+            dom: 'Bfrtip',
+            buttons: [
+                'csv'
+            ]
+        });
+
+        // using this to change color of csv-button if dark mode is chosen
+        var background = $('body').css( "background-color");
+
+        if (background != ('rgb(255, 255, 255)')) {
+            $(".buttons-csv").css("color", "white");
+        }
+
         function displayWasContacts(was, band) {
             var baseURL= "<?php echo base_url();?>";
             $.ajax({
@@ -1705,6 +1823,7 @@ $(document).ready(function(){
                 callback: function(result) {
                     if(result) {
                         $(".edit-dialog").modal('hide');
+                        $(".qso-dialog").modal('hide');
                         var baseURL= "<?php echo base_url();?>";
                         $.ajax({
                             url: baseURL + 'index.php/qso/delete_ajax',
@@ -1762,13 +1881,36 @@ $(document).ready(function(){
         </script>
     <?php if ($this->uri->segment(1) == "timeline") { ?>
         <script>
-            function displayTimelineContacts(adif, band) {
+            $('.timelinetable').DataTable({
+                "pageLength": 25,
+                responsive: false,
+                ordering: false,
+                "scrollY":        "500px",
+                "scrollCollapse": true,
+                "paging":         false,
+                "scrollX": true,
+                dom: 'Bfrtip',
+                buttons: [
+                    'csv'
+                ]
+            });
+
+            // using this to change color of csv-button if dark mode is chosen
+            var background = $('body').css( "background-color");
+
+            if (background != ('rgb(255, 255, 255)')) {
+                $(".buttons-csv").css("color", "white");
+            }
+
+            function displayTimelineContacts(querystring, band, mode, type) {
                 var baseURL= "<?php echo base_url();?>";
                 $.ajax({
                     url: baseURL + 'index.php/timeline/details',
                     type: 'post',
-                    data: {'Adif': adif,
-                        'Band': band
+                    data: {'Querystring': querystring,
+                        'Band': band,
+                        'Mode': mode,
+                        'Type': type
                     },
                     success: function(html) {
                         BootstrapDialog.show({
@@ -1790,6 +1932,509 @@ $(document).ready(function(){
         </script>
         <?php } ?>
 
+    <?php if ($this->uri->segment(1) == "mode") { ?>
+        <script>
+            $('.modetable').DataTable({
+                "pageLength": 25,
+                responsive: false,
+                ordering: false,
+                "scrollY":        "500px",
+                "scrollCollapse": true,
+                "paging":         false,
+                "scrollX": true
+            });
 
+            function createModeDialog() {
+                var baseURL= "<?php echo base_url();?>";
+                $.ajax({
+                    url: baseURL + 'index.php/mode/create',
+                    type: 'post',
+                    success: function(html) {
+                        BootstrapDialog.show({
+                            title: 'Create mode',
+                            size: BootstrapDialog.SIZE_WIDE,
+                            cssClass: 'create-mode-dialog',
+                            nl2br: false,
+                            message: html,
+                            buttons: [{
+                                label: 'Close',
+                                action: function (dialogItself) {
+                                    dialogItself.close();
+                                }
+                            }]
+                        });
+                    }
+                });
+            }
+
+            function createMode(form) {
+                var baseURL= "<?php echo base_url();?>";
+                if (form.mode.value != '') {
+                    $.ajax({
+                        url: baseURL + 'index.php/mode/create',
+                        type: 'post',
+                        data: {'mode': form.mode.value,
+                            'submode': form.submode.value,
+                            'qrgmode': form.qrgmode.value,
+                            'active': form.active.value},
+                        success: function(html) {
+                            location.reload();
+                        }
+                    });
+                }
+            }
+
+            function deactivateMode(modeid) {
+                var baseURL= "<?php echo base_url();?>";
+                $.ajax({
+                    url: baseURL + 'index.php/mode/deactivate',
+                    type: 'post',
+                    data: {'id': modeid },
+                    success: function(html) {
+                        $(".mode_" + modeid).text('not active');
+                        $('.btn_'+modeid).html('Activate');
+                        $('.btn_'+modeid).attr('onclick', 'activateMode('+modeid+')')
+                    }
+                });
+            }
+
+            function activateMode(modeid) {
+                var baseURL= "<?php echo base_url();?>";
+                $.ajax({
+                    url: baseURL + 'index.php/mode/activate',
+                    type: 'post',
+                    data: {'id': modeid },
+                    success: function(html) {
+                        $('.mode_'+modeid).text('active');
+                        $('.btn_'+modeid).html('Deactivate');
+                        $('.btn_'+modeid).attr('onclick', 'deactivateMode('+modeid+')')
+                    }
+                });
+            }
+
+            function deleteMode(id, mode) {
+                BootstrapDialog.confirm({
+                    title: 'DANGER',
+                    message: 'Warning! Are you sure you want to delete the following mode: ' + mode + '?'  ,
+                    type: BootstrapDialog.TYPE_DANGER,
+                    closable: true,
+                    draggable: true,
+                    btnOKClass: 'btn-danger',
+                    callback: function(result) {
+                        if(result) {
+                            var baseURL= "<?php echo base_url();?>";
+                            $.ajax({
+                                url: baseURL + 'index.php/mode/delete',
+                                type: 'post',
+                                data: {'id': id
+                                },
+                                success: function(data) {
+                                    $(".mode_" + id).parent("tr:first").remove(); // removes mode from table
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        </script>
+    <?php } ?>
+
+<?php if ($this->uri->segment(1) == "accumulated") { ?>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <script>
+        function accumulatePlot(form) {
+            $(".ld-ext-right").addClass('running');
+            $(".ld-ext-right").prop('disabled', true);
+
+            // using this to change color of legend and label according to background color
+            var background = $('body').css( "background-color");
+            var color = 'grey';
+            if (background != ('rgb(255, 255, 255)')) {
+                color = 'white';
+            }
+
+            var baseURL= "<?php echo base_url();?>";
+            var award = form.awardradio.value;
+            var mode = form.mode.value;
+            var period = form.periodradio.value;
+            $.ajax({
+                url: baseURL+'index.php/accumulated/get_accumulated_data',
+                type: 'post',
+                data: {'Band': form.band.value, 'Award': award, 'Mode': mode, 'Period': period},
+                success: function(data) {
+                    // used for switching award text in the table and the chart
+                    switch(award) {
+                        case 'dxcc': var awardtext = "DXCC\'s"; break;
+                        case 'was':  var awardtext = "states";break;
+                        case 'iota': var awardtext = "IOTA\'s";break;
+                        case 'waz':  var awardtext = "CQ zones"; break;
+                    }
+
+                    var periodtext = 'Year';
+                    if (period == 'month') {
+                        periodtext += ' + month';
+                    }
+                    // removing the old chart so that it will not interfere when loading chart again
+                    $("#accumulateContainer").empty();
+                    $("#accumulateContainer").append("<canvas id=\"myChartAccumulate\" width=\"400\" height=\"150\"></canvas><div id=\"accumulateTable\"></div>");
+
+                    // appending table to hold the data
+                    $("#accumulateTable").append('<table style="width:100%" class="accutable table table-sm table-bordered table-hover table-striped table-condensed text-center"><thead>' +
+                        '<tr>' +
+                        '<td>#</td>' +
+                        '<td>' + periodtext + '</td>' +
+                        '<td>Accumulated # of ' + awardtext + ' worked </td>'+
+                        '</tr>' +
+                        '</thead>' +
+                        '<tbody></tbody></table>');
+                    var labels = [];
+                    var dataDxcc = [];
+
+                    var $myTable = $('.accutable');
+                    var i = 1;
+
+                    // building the rows in the table
+                    var rowElements = data.map(function ( row ) {
+
+                        var $row = $('<tr></tr>');
+
+                        var $iterator = $('<td></td>').html(i++);
+                        var $type = $('<td></td>').html(row.year);
+                        var $content = $('<td></td>').html(row.total);
+
+                        $row.append($iterator, $type, $content);
+
+                        return $row;
+                    });
+
+                    // finally inserting the rows
+                    $myTable.append(rowElements);
+
+                    $.each(data, function(){
+                        labels.push(this.year);
+                        dataDxcc.push(this.total);
+                    });
+
+                    var ctx = document.getElementById("myChartAccumulate").getContext('2d');
+                    var myChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Accumulated number of ' + awardtext + ' worked each ' + period,
+                                data: dataDxcc,
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 2,
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero:true,
+                                        fontColor: color
+                                    }
+                                }],
+                                xAxes: [{
+                                    ticks: {
+                                        fontColor: color
+                                    }
+                                }]
+                            },
+                            legend: {
+                                labels: {
+                                    fontColor: color,
+                                }
+                            },
+                        }
+                    });
+                    $(".ld-ext-right").removeClass('running');
+                    $(".ld-ext-right").prop('disabled', false);
+                    $('.accutable').DataTable({
+                        responsive: false,
+                        ordering: false,
+                        "scrollY":        "400px",
+                        "scrollCollapse": true,
+                        "paging":         false,
+                        "scrollX": true,
+                        dom: 'Bfrtip',
+                        buttons: [
+                            'csv'
+                        ]
+                    });
+
+                    // using this to change color of csv-button if dark mode is chosen
+                    var background = $('body').css( "background-color");
+
+                    if (background != ('rgb(255, 255, 255)')) {
+                        $(".buttons-csv").css("color", "white");
+                    }
+                }
+            });
+        }
+    </script>
+<?php } ?>
+
+<?php if ($this->uri->segment(1) == "timeplotter") { ?>
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script>
+
+        function timeplot(form) {
+            $(".ld-ext-right").addClass('running');
+            $(".ld-ext-right").prop('disabled', true);
+            $(".alert").remove();
+            var baseURL= "<?php echo base_url();?>";
+            $.ajax({
+                url: baseURL+'index.php/timeplotter/getTimes',
+                type: 'post',
+                data: {'band': form.band.value, 'dxcc': form.dxcc.value, 'cqzone': form.cqzone.value},
+                success: function(tmp) {
+                    $(".ld-ext-right").removeClass('running');
+                    $(".ld-ext-right").prop('disabled', false);
+                    if (tmp.ok == 'OK') {
+                        plotTimeplotterChart(tmp);
+                    }
+                    else {
+                        $("#container").remove();
+                        $("#info").remove();
+                        $("#timeplotter_div").append('<div class="alert alert-danger"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>\n' +
+                            tmp.error +
+                            '</div>');
+                    }
+                }
+            });
+        }
+
+        function plotTimeplotterChart(tmp) {
+            $("#container").remove();
+            $("#info").remove();
+            $("#timeplotter_div").append('<p id="info">' + tmp.qsocount + ' contacts were plotted.</p><div id="container" style="height: 600px;"></div>');
+            var options = {
+                chart: {
+                    type: 'column',
+                    zoomType: 'xy',
+                    renderTo: 'container'
+                },
+                title: {
+                    text: 'Time distribution'
+                },
+                xAxis: {
+                    categories: [],
+                    crosshair: true,
+                    type: "category",
+                    min:0,
+                    max:47,
+                },
+                yAxis: {
+                    title: {
+                        text: '# QSOs'
+                    }
+                },
+                rangeSelector: {
+                    selected: 1
+                },
+                tooltip: {
+                    formatter: function () {
+                        if(this.point) {
+                            return "Time: " + options.xAxis.categories[this.point.x] +
+                                "<br />Callsign(s) worked (max 5): " + myComments[this.point.x] +
+                                "<br />Number of QSOs: <strong>" + series.data[this.point.x] + "</strong>";
+                        }
+                    }
+                },
+                series: []
+            };
+            var myComments=[];
+
+            var series = {
+                data: []
+            };
+
+            $.each(tmp.qsodata, function(){
+                myComments.push(this.calls);
+                options.xAxis.categories.push(this.time);
+                series.name = 'Number of QSOs';
+                series.data.push(this.count);
+            });
+
+            options.series.push(series);
+
+            var chart = new Highcharts.Chart(options);
+        }
+
+    </script>
+<?php } ?>
+
+<?php if ($this->uri->segment(1) == "qsl") { ?>
+    <script>
+        $('.qsltable').DataTable({
+            "pageLength": 25,
+            responsive: false,
+            ordering: false,
+            "scrollY":        "500px",
+            "scrollCollapse": true,
+            "paging":         false,
+            "scrollX": true
+        });
+    </script>
+<?php } ?>
+
+<script>
+function viewQsl(picture, callsign) {
+            var baseURL= "<?php echo base_url();?>";
+            var $textAndPic = $('<div></div>');
+                $textAndPic.append('<img class="img-fluid" style="height:auto;width:auto;"src="'+baseURL+'/assets/qslcard/'+picture+'" />');
+            var title = '';
+            if (callsign == null) {
+                title = 'QSL Card';
+            } else {
+                title = 'QSL Card for ' + callsign;
+            }
+
+            BootstrapDialog.show({
+                title: title,
+                size: BootstrapDialog.SIZE_WIDE,
+                message: $textAndPic,
+                buttons: [{
+                    label: 'Close',
+                    action: function(dialogRef){
+                        dialogRef.close();
+                    }
+                }]
+            });
+        }
+</script>
+<script>
+function deleteQsl(id) {
+            BootstrapDialog.confirm({
+                title: 'DANGER',
+                message: 'Warning! Are you sure you want to delete this QSL card?'  ,
+                type: BootstrapDialog.TYPE_DANGER,
+                closable: true,
+                draggable: true,
+                btnOKClass: 'btn-danger',
+                callback: function(result) {
+                    if(result) {
+                        var baseURL= "<?php echo base_url();?>";
+                        $.ajax({
+                            url: baseURL + 'index.php/qsl/delete',
+                            type: 'post',
+                            data: {'id': id
+                            },
+                            success: function(data) {
+                                $("#" + id).parent("tr:first").remove(); // removes qsl from table
+
+                                // remove qsl from carousel
+                                $(".carousel-indicators li:last-child").remove();
+                                $(".carouselimageid_"+id).remove();
+                                $('#carouselExampleIndicators').find('.carousel-item').first().addClass('active');
+
+                                // remove table and hide tab if all qsls are deleted
+                                if ($('.qsltable tr').length == 1) {
+                                    $('.qsltable').remove();
+                                    $('.qslcardtab').attr('hidden','');
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
+</script>
+
+<script>
+    function uploadQsl() {
+        var baseURL= "<?php echo base_url();?>";
+        var formdata = new FormData(document.getElementById("fileinfo"));
+
+        $.ajax({
+            url: baseURL + 'index.php/qsl/uploadqsl',
+            type: 'post',
+            data: formdata,
+            enctype: 'multipart/form-data',
+            processData: false,
+            contentType: false,
+            success: function(data) {
+                if (data.status.front.status == 'Success') {
+                    if ($('.qsltable').length > 0) {
+                        $('.qsltable tr:last').after('<tr><td style="text-align: center">'+data.status.front.filename+'</td>' +
+                            '<td id="'+data.status.front.insertid+'"style="text-align: center"><button onclick="deleteQsl('+data.status.front.insertid+');" class="btn btn-sm btn-danger">Delete</button></td>' +
+                            '<td style="text-align: center"><button onclick="viewQsl(\'' + data.status.front.filename + '\')" class="btn btn-sm btn-success">View</button></td>'+
+                            '</tr>');
+                        var quantity = $(".carousel-indicators li").length;
+                        $(".carousel-indicators").append('<li data-target="#carouselExampleIndicators" data-slide-to="'+quantity+'"></li>');
+                        $(".carousel-inner").append('<div class="carousel-item carouselimageid_'+data.status.front.insertid+'"><img class="d-block w-100" src="'+baseURL+'/assets/qslcard/'+data.status.front.filename+'" alt="QSL picture #'+(quantity+1)+'"></div>');
+                        $("#qslcardfront").val(null);
+                    }
+                    else {
+                        $("#qslupload").prepend('<table style="width:100%" class="qsltable table table-sm table-bordered table-hover table-striped table-condensed">'+
+                            '<thead>'+
+                               '<tr>'+
+                            '<th style="text-align: center">QSL image file</th>'+
+                            '<th style="text-align: center"></th>'+
+                            '<th style="text-align: center"></th>'+
+                            '</tr>'+
+                            '</thead><tbody>'+
+                                '<tr><td style="text-align: center">'+data.status.front.filename+'</td>' +
+                            '<td id="'+data.status.front.insertid+'"style="text-align: center"><button onclick="deleteQsl('+data.status.front.insertid+');" class="btn btn-sm btn-danger">Delete</button></td>' +
+                            '<td style="text-align: center"><button onclick="viewQsl(\'' + data.status.front.filename + '\')" class="btn btn-sm btn-success">View</button></td>'+
+                            '</tr>'+
+                        '</tbody></table>');
+                        $('.qslcardtab').removeAttr('hidden');
+                        var quantity = $(".carousel-indicators li").length;
+                        $(".carousel-indicators").append('<li class="active" data-target="#carouselExampleIndicators" data-slide-to="'+quantity+'"></li>');
+                        $(".carousel-inner").append('<div class="active carousel-item carouselimageid_'+data.status.front.insertid+'"><img class="d-block w-100" src="'+baseURL+'/assets/qslcard/'+data.status.front.filename+'" alt="QSL picture #'+(quantity+1)+'"></div>');
+                        $(".carouselExampleIndicators").carousel();
+                        $("#qslcardfront").val(null);
+                    }
+
+                } else {
+                    $("#qslupload").append('<div class="alert alert-danger"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>\n' +
+                        data.status.front +
+                        '</div>');
+                }
+                if (data.status.back.status == 'Success') {
+                    var qsoid = $("#qsoid").text();
+                    if ($('.qsltable').length > 0) {
+                        $('.qsltable tr:last').after('<tr><td style="text-align: center">'+data.status.back.filename+'</td>' +
+                            '<td id="'+data.status.back.insertid+'"style="text-align: center"><button onclick="deleteQsl('+data.status.back.insertid+');" class="btn btn-sm btn-danger">Delete</button></td>' +
+                            '<td style="text-align: center"><button onclick="viewQsl(\'' + data.status.back.filename + '\')" class="btn btn-sm btn-success">View</button></td>'+
+                            '</tr>');
+                        var quantity = $(".carousel-indicators li").length;
+                        $(".carousel-indicators").append('<li data-target="#carouselExampleIndicators" data-slide-to="'+quantity+'"></li>');
+                        $(".carousel-inner").append('<div class="carousel-item carouselimageid_'+data.status.back.insertid+'"><img class="d-block w-100" src="'+baseURL+'/assets/qslcard/'+data.status.back.filename+'" alt="QSL picture #'+(quantity+1)+'"></div>');
+                        $("#qslcardback").val(null);
+                    }
+                    else {
+                        $("#qslupload").prepend('<table style="width:100%" class="qsltable table table-sm table-bordered table-hover table-striped table-condensed">'+
+                            '<thead>'+
+                            '<tr>'+
+                            '<th style="text-align: center">QSL image file</th>'+
+                            '<th style="text-align: center"></th>'+
+                            '<th style="text-align: center"></th>'+
+                            '</tr>'+
+                            '</thead><tbody>'+
+                            '<tr><td style="text-align: center">'+data.status.back.filename+'</td>' +
+                            '<td id="'+data.status.back.insertid+'"style="text-align: center"><button onclick="deleteQsl('+data.status.back.insertid+');" class="btn btn-sm btn-danger">Delete</button></td>' +
+                            '<td><button onclick="viewQsl(\'' + data.status.back.filename + '\')" class="btn btn-sm btn-success">View</button></td>'+
+                            '</tr>'+
+                            '</tbody></table>');
+                        $('.qslcardtab').removeAttr('hidden');
+                        var quantity = $(".carousel-indicators li").length;
+                        $(".carousel-indicators").append('<li class="active" data-target="#carouselExampleIndicators" data-slide-to="'+quantity+'"></li>');
+                        $(".carousel-inner").append('<div class="active carousel-item carouselimageid_'+data.status.back.insertid+'"><img class="d-block w-100" src="'+baseURL+'/assets/qslcard/'+data.status.back.filename+'" alt="QSL picture #'+(quantity+1)+'"></div>');
+                        $(".carouselExampleIndicators").carousel();
+                        $("#qslcardback").val(null);
+                    }
+                } else {
+                    $("#qslupload").append('<div class="alert alert-danger"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>\n' +
+                        data.status.back +
+                        '</div>');
+                }
+            }
+        });
+    }
+</script>
   </body>
 </html>

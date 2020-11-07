@@ -232,19 +232,10 @@ class Logbook_model extends CI_Model {
         $CI =& get_instance();
         $CI->load->model('Stations');
         $station_id = $CI->Stations->find_active();
-        $sql = "select * from " . $this->config->item('table_name') . " where station_id =" . $station_id . " and col_gridsquare like '" . $gridsquare. "%'";
-
-        if ($band != 'All') {
-            if ($band == 'SAT') {
-                $sql .= " and col_prop_mode ='" . $band . "'";
-            } else {
-                $sql .= " and col_prop_mode !='SAT'";
-                $sql .= " and col_band ='" . $band . "'";
-            }
-        }
-
-        $sql .= " union ";
-        $sql .= "select * from " . $this->config->item('table_name') . " where station_id =" . $station_id . " and col_vucc_grids like '%" . $gridsquare. "%'";
+        $sql = "select * from " . $this->config->item('table_name') .
+                " where station_id =" . $station_id .
+                " and (col_gridsquare like '" . $gridsquare. "%'
+                    or col_vucc_grids like '%" . $gridsquare. "%')";
 
         if ($band != 'All') {
             if ($band == 'SAT') {
@@ -263,11 +254,13 @@ class Logbook_model extends CI_Model {
         $CI->load->model('Stations');
         $station_id = $CI->Stations->find_active();
 
-        if ($band == 'SAT') {
-            $this->db->where('col_prop_mode', $band);
-        } else if ($band != '') {
-            $this->db->where('col_prop_mode !=', 'SAT');
-            $this->db->where('col_band', $band);
+        if ($band != 'All') {
+            if ($band == 'SAT') {
+                $this->db->where('col_prop_mode', $band);
+            } else if ($band != '') {
+                $this->db->where('col_prop_mode !=', 'SAT');
+                $this->db->where('col_band', $band);
+            }
         }
 
         $this->db->where('station_id', $station_id);
@@ -276,7 +269,7 @@ class Logbook_model extends CI_Model {
         return $this->db->get($this->config->item('table_name'));
     }
 
-    public function timeline_qso_details($adif, $band){
+    public function timeline_qso_details($querystring, $band, $mode, $type){
         $CI =& get_instance();
         $CI->load->model('Stations');
         $station_id = $CI->Stations->find_active();
@@ -290,8 +283,18 @@ class Logbook_model extends CI_Model {
             }
         }
 
+        if ($mode != 'All') {
+            $this->db->where('col_mode', $mode);
+        }
+
         $this->db->where('station_id', $station_id);
-        $this->db->where('COL_DXCC', $adif);
+
+        switch($type) {
+            case 'dxcc': $this->db->where('COL_DXCC', $querystring); break;
+            case 'was':  $this->db->where('COL_STATE', $querystring); break;
+            case 'iota': $this->db->where('COL_IOTA', $querystring); break;
+            case 'waz':  $this->db->where('COL_CQZ', $querystring); break;
+        }
 
         return $this->db->get($this->config->item('table_name'));
     }
@@ -485,6 +488,10 @@ class Logbook_model extends CI_Model {
           $adif .= '<SOTA_REF:' . strlen($data['COL_SOTA_REF']) . '>' . $data['COL_SOTA_REF'];
       }
 
+      if($data['COL_COMMENT']) {
+          $adif .= '<COMMENT:' . strlen($data['COL_COMMENT']) . '>' . $data['COL_COMMENT'];
+      }
+
       if($data['COL_SAT_NAME']) {
           if($data['COL_SAT_MODE'] != 0 || $data['COL_SAT_MODE'] !="") {
               $adif .= '<sat_mode:' . strlen($data['COL_SAT_MODE']) . '>' . $data['COL_SAT_MODE'];
@@ -566,6 +573,7 @@ class Logbook_model extends CI_Model {
        'COL_TIME_OFF' => $this->input->post('time_off'),
        'COL_CALL' => strtoupper(trim($this->input->post('callsign'))),
        'COL_BAND' => $this->input->post('band'),
+       'COL_BAND_RX' => $this->input->post('band_rx'),
        'COL_FREQ' => $this->parse_frequency($this->input->post('freq')),
        'COL_MODE' => $mode,
        'COL_SUBMODE' => $submode,
@@ -1224,46 +1232,84 @@ class Logbook_model extends CI_Model {
         }
     }
 
-    /* Return total number of countrys worked */
-    function total_countrys() {
+    /* Return total number of countries worked */
+    function total_countries() {
       $CI =& get_instance();
       $CI->load->model('Stations');
       $station_id = $CI->Stations->find_active();
 
-        $query = $this->db->query('SELECT DISTINCT (COL_COUNTRY) FROM '.$this->config->item('table_name').' WHERE COL_COUNTRY != "Invalid" AND station_id = '.$station_id.'');
+      $sql = 'SELECT DISTINCT (COL_COUNTRY) FROM '.$this->config->item('table_name').' 
+                WHERE COL_COUNTRY != "Invalid"
+                AND col_dxcc > 0 
+                AND station_id = '.$station_id ;
+
+      $query = $this->db->query($sql);
 
         return $query->num_rows();
     }
 
-    /* Return total number of countrys confirmed with paper QSL */
-    function total_countrys_confirmed_paper() {
-      $CI =& get_instance();
-      $CI->load->model('Stations');
-      $station_id = $CI->Stations->find_active();
+    /* Return total number of countries worked */
+    function total_countries_current() {
+        $CI =& get_instance();
+        $CI->load->model('Stations');
+        $station_id = $CI->Stations->find_active();
 
-        $query = $this->db->query('SELECT DISTINCT (COL_COUNTRY) FROM '.$this->config->item('table_name').' WHERE COL_COUNTRY != "Invalid" AND station_id = '.$station_id.' AND COL_QSL_RCVD =\'Y\'');
+        $sql = 'SELECT DISTINCT (COL_COUNTRY) FROM '.$this->config->item('table_name').' thcv 
+        join dxcc_entities on thcv.col_dxcc = dxcc_entities.adif
+        WHERE COL_COUNTRY != "Invalid" 
+        AND dxcc_entities.end is null
+        AND station_id = '.$station_id;
 
-        return $query->num_rows();
-    }
-
-    /* Return total number of countrys confirmed with eQSL */
-    function total_countrys_confirmed_eqsl() {
-      $CI =& get_instance();
-      $CI->load->model('Stations');
-      $station_id = $CI->Stations->find_active();
-
-        $query = $this->db->query('SELECT DISTINCT (COL_COUNTRY) FROM '.$this->config->item('table_name').' WHERE COL_COUNTRY != "Invalid" AND station_id = '.$station_id.' AND COL_EQSL_QSL_RCVD =\'Y\'');
+        $query = $this->db->query($sql);
 
         return $query->num_rows();
     }
 
-    /* Return total number of countrys confirmed with LoTW */
-    function total_countrys_confirmed_lotw() {
+    /* Return total number of countries confirmed with paper QSL */
+    function total_countries_confirmed_paper() {
       $CI =& get_instance();
       $CI->load->model('Stations');
       $station_id = $CI->Stations->find_active();
 
-        $query = $this->db->query('SELECT DISTINCT (COL_COUNTRY) FROM '.$this->config->item('table_name').' WHERE COL_COUNTRY != "Invalid" AND station_id = '.$station_id.' AND COL_LOTW_QSL_RCVD =\'Y\'');
+      $sql = 'SELECT DISTINCT (COL_COUNTRY) FROM '.$this->config->item('table_name').' 
+                WHERE COL_COUNTRY != "Invalid"
+                AND COL_DXCC > 0 
+                AND station_id = '.$station_id.' AND COL_QSL_RCVD =\'Y\'';
+
+        $query = $this->db->query($sql);
+
+        return $query->num_rows();
+    }
+
+    /* Return total number of countries confirmed with eQSL */
+    function total_countries_confirmed_eqsl() {
+      $CI =& get_instance();
+      $CI->load->model('Stations');
+      $station_id = $CI->Stations->find_active();
+
+      $sql = 'SELECT DISTINCT (COL_COUNTRY) FROM '.$this->config->item('table_name').' 
+                WHERE COL_COUNTRY != "Invalid"
+                AND COL_DXCC > 0 
+                AND station_id = '.$station_id.' AND COL_EQSL_QSL_RCVD =\'Y\'';
+
+        $query = $this->db->query($sql);
+
+        return $query->num_rows();
+    }
+
+    /* Return total number of countries confirmed with LoTW */
+    function total_countries_confirmed_lotw() {
+      $CI =& get_instance();
+      $CI->load->model('Stations');
+      $station_id = $CI->Stations->find_active();
+
+      $sql = 'SELECT DISTINCT (COL_COUNTRY) FROM '.$this->config->item('table_name').' 
+                  WHERE COL_COUNTRY != "Invalid" 
+                  AND COL_DXCC > 0
+                  AND station_id = '.$station_id.' 
+                  AND COL_LOTW_QSL_RCVD =\'Y\'';
+
+        $query = $this->db->query($sql);
 
         return $query->num_rows();
     }
@@ -1433,7 +1479,7 @@ class Logbook_model extends CI_Model {
 
     // Show all QSOs we need to send to eQSL
     function eqsl_not_yet_sent() {
-      $this->db->select('station_profile.*, '.$this->config->item('table_name').'.COL_PRIMARY_KEY, '.$this->config->item('table_name').'.COL_TIME_ON, '.$this->config->item('table_name').'.COL_CALL, '.$this->config->item('table_name').'.COL_MODE, '.$this->config->item('table_name').'.COL_SUBMODE, '.$this->config->item('table_name').'.COL_BAND, '.$this->config->item('table_name').'.COL_COMMENT, '.$this->config->item('table_name').'.COL_RST_SENT, '.$this->config->item('table_name').'.COL_PROP_MODE');
+      $this->db->select('station_profile.*, '.$this->config->item('table_name').'.COL_PRIMARY_KEY, '.$this->config->item('table_name').'.COL_TIME_ON, '.$this->config->item('table_name').'.COL_CALL, '.$this->config->item('table_name').'.COL_MODE, '.$this->config->item('table_name').'.COL_SUBMODE, '.$this->config->item('table_name').'.COL_BAND, '.$this->config->item('table_name').'.COL_COMMENT, '.$this->config->item('table_name').'.COL_RST_SENT, '.$this->config->item('table_name').'.COL_PROP_MODE, '.$this->config->item('table_name').'.COL_SAT_NAME, '.$this->config->item('table_name').'.COL_SAT_MODE');
       $this->db->from('station_profile');
       $this->db->join($this->config->item('table_name'),'station_profile.station_id = '.$this->config->item('table_name').'.station_id AND station_profile.eqslqthnickname != ""','left');
       $this->db->where($this->config->item('table_name').'.COL_EQSL_QSL_SENT !=', 'Y');

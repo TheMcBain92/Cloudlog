@@ -40,41 +40,6 @@ class Awards extends CI_Controller {
 
 	}
 	
-	public function dok_details(){
-        $a = $this->input->get();
-        $q = "";
-        foreach ($a as $key => $value) {
-        	$q .= $key."=".$value.("&#40;and&#41;");
-        }
-        $q = substr($q, 0, strlen($q)-13);
-
-        $arguments["query"] = $q;
-        $arguments["fields"] = '';
-        $arguments["format"] = "json";
-        $arguments["limit"] = '';
-        $arguments["order"] = '';
-
-        // print_r($arguments);
-        // return;
-
-		// Load the API and Logbook models
-		$this->load->model('api_model');
-		$this->load->model('logbook_model');
-
-		// Call the parser within the API model to build the query
-		$query = $this->api_model->select_parse($arguments);
-
-		// Execute the query, and retrieve the results
-		$data = $this->logbook_model->api_search_query($query);
-
-		// Render Page
-		$data['page_title'] = "Log View - DOK";
-		$data['filter'] = str_replace("&#40;and&#41;", ", ", $q);//implode(", ", array_keys($a));
-		$this->load->view('interface_assets/header', $data);
-		$this->load->view('awards/dok/details');
-		$this->load->view('interface_assets/footer');
-	}
-
     public function dok_details_ajax(){
         $a = $this->input->post();
         $q = "";
@@ -105,9 +70,7 @@ class Awards extends CI_Controller {
         // Render Page
         $data['page_title'] = "Log View - DOK";
         $data['filter'] = str_replace("&#40;and&#41;", ", ", $q);//implode(", ", array_keys($a));
-        //$this->load->view('interface_assets/header', $data);
-        $this->load->view('awards/dok/details_ajax', $data);
-        //$this->load->view('interface_assets/footer');
+        $this->load->view('awards/details', $data);
     }
 	
 	public function dxcc ()	{
@@ -172,22 +135,6 @@ class Awards extends CI_Controller {
 		$this->load->view('interface_assets/footer');
 	}
 
-	public function dxcc_details(){
- 
-		$this->load->model('logbook_model');
-
-		$country = str_replace('"', "", $this->input->get("Country"));
-		$band = str_replace('"', "", $this->input->get("Band"));
-		$data['results'] = $this->logbook_model->dxcc_qso_details($country, $band);
-
-				// Render Page
-		$data['page_title'] = "Log View - DXCC";
-		$data['filter'] = "country ".$country. " and ".$band;
-		$this->load->view('interface_assets/header', $data);
-		$this->load->view('awards/dxcc/details');
-		$this->load->view('interface_assets/footer');
-	}
-
     public function dxcc_details_ajax(){
         $this->load->model('logbook_model');
 
@@ -198,7 +145,7 @@ class Awards extends CI_Controller {
         // Render Page
         $data['page_title'] = "Log View - DXCC";
         $data['filter'] = "country ".$country. " and ".$band;
-        $this->load->view('awards/dxcc/details_ajax', $data);
+        $this->load->view('awards/details', $data);
     }
 
     public function vucc()	{
@@ -217,7 +164,9 @@ class Awards extends CI_Controller {
     public function vucc_band(){
         $this->load->model('vucc');
         $band = str_replace('"', "", $this->input->get("Band"));
-        $data['vucc_array'] = $this->vucc->vucc_details($band);
+        $type = str_replace('"', "", $this->input->get("Type"));
+        $data['vucc_array'] = $this->vucc->vucc_details($band, $type);
+        $data['type'] = $type;
 
         // Render Page
         $data['page_title'] = "VUCC - band";
@@ -225,21 +174,6 @@ class Awards extends CI_Controller {
         $data['band'] = $band;
         $this->load->view('interface_assets/header', $data);
         $this->load->view('awards/vucc/band');
-        $this->load->view('interface_assets/footer');
-    }
-
-    public function vucc_details(){
-        $this->load->model('logbook_model');
-
-        $gridsquare = str_replace('"', "", $this->input->get("Gridsquare"));
-        $band = str_replace('"', "", $this->input->get("Band"));
-        $data['results'] = $this->logbook_model->vucc_qso_details($gridsquare, $band);
-
-        // Render Page
-        $data['page_title'] = "Log View - VUCC";
-        $data['filter'] = "vucc " . $gridsquare . " and band ".$band;
-        $this->load->view('interface_assets/header', $data);
-        $this->load->view('awards/vucc/details');
         $this->load->view('interface_assets/footer');
     }
 
@@ -253,7 +187,7 @@ class Awards extends CI_Controller {
         // Render Page
         $data['page_title'] = "Log View - VUCC";
         $data['filter'] = "vucc " . $gridsquare . " and band ".$band;
-        $this->load->view('awards/vucc/details_ajax', $data);
+        $this->load->view('awards/details', $data);
     }
 
 	/*
@@ -349,6 +283,7 @@ class Awards extends CI_Controller {
         }
 
         $data['cq_array'] = $this->cq->get_cq_array($bands, $postdata);
+        $data['cq_summary'] = $this->cq->get_cq_summary($bands);
 
         // Render page
         $data['page_title'] = "Awards - CQ Magazine";
@@ -356,21 +291,6 @@ class Awards extends CI_Controller {
 		$this->load->view('awards/cq/index');
 		$this->load->view('interface_assets/footer');
 	}
-
-    public function cq_details(){
-        $this->load->model('logbook_model');
-
-        $cqzone = str_replace('"', "", $this->input->get("CQZone"));
-        $band = str_replace('"', "", $this->input->get("Band"));
-        $data['results'] = $this->logbook_model->cq_qso_details($cqzone, $band);
-
-        // Render Page
-        $data['page_title'] = "Log View - DXCC";
-        $data['filter'] = "CQZone ".$cqzone;
-        $this->load->view('interface_assets/header', $data);
-        $this->load->view('awards/cq/details');
-        $this->load->view('interface_assets/footer');
-    }
 
     public function cq_details_ajax(){
         $this->load->model('logbook_model');
@@ -382,7 +302,7 @@ class Awards extends CI_Controller {
         // Render Page
         $data['page_title'] = "Log View - DXCC";
         $data['filter'] = "CQZone ".$cqzone. " and ".$band;;
-        $this->load->view('awards/cq/details_ajax', $data);
+        $this->load->view('awards/details', $data);
     }
 
     public function was() {
@@ -430,21 +350,6 @@ class Awards extends CI_Controller {
         $this->load->view('interface_assets/footer');
     }
 
-    public function was_details() {
-        $this->load->model('logbook_model');
-
-        $state = str_replace('"', "", $this->input->get("State"));
-        $band = str_replace('"', "", $this->input->get("Band"));
-        $data['results'] = $this->logbook_model->was_qso_details($state, $band);
-
-        // Render Page
-        $data['page_title'] = "Log View - WAS";
-        $data['filter'] = "state ".$state. " and ".$band;
-        $this->load->view('interface_assets/header', $data);
-        $this->load->view('awards/was/details');
-        $this->load->view('interface_assets/footer');
-    }
-
     public function was_details_ajax() {
         $this->load->model('logbook_model');
 
@@ -455,7 +360,7 @@ class Awards extends CI_Controller {
         // Render Page
         $data['page_title'] = "Log View - WAS";
         $data['filter'] = "state ".$state. " and ".$band;
-        $this->load->view('awards/was/details_ajax', $data);
+        $this->load->view('awards/details', $data);
     }
 
     public function iota ()	{
@@ -507,26 +412,12 @@ class Awards extends CI_Controller {
 
         $iotalist = $this->iota->fetchIota($postdata);
         $data['iota_array'] = $this->iota->get_iota_array($iotalist, $bands, $postdata);
+        $data['iota_summary'] = $this->iota->get_iota_summary($bands);
 
         // Render Page
         $data['page_title'] = "Awards - IOTA (Islands On The Air)";
         $this->load->view('interface_assets/header', $data);
         $this->load->view('awards/iota/index');
-        $this->load->view('interface_assets/footer');
-    }
-
-    public function iota_details(){
-        $this->load->model('logbook_model');
-
-        $iota = str_replace('"', "", $this->input->get("Iota"));
-        $band = str_replace('"', "", $this->input->get("Band"));
-        $data['results'] = $this->logbook_model->iota_qso_details($iota, $band);
-
-        // Render Page
-        $data['page_title'] = "Log View - IOTA";
-        $data['filter'] = "iota ".$iota. " and ".$band;
-        $this->load->view('interface_assets/header', $data);
-        $this->load->view('awards/iota/details');
         $this->load->view('interface_assets/footer');
     }
 
@@ -540,6 +431,6 @@ class Awards extends CI_Controller {
         // Render Page
         $data['page_title'] = "Log View - IOTA";
         $data['filter'] = "iota ".$iota. " and ".$band;
-        $this->load->view('awards/iota/details_ajax', $data);
+        $this->load->view('awards/details', $data);
     }
 }
