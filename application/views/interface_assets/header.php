@@ -7,15 +7,18 @@
 
     <!-- Bootstrap CSS -->
     <?php if($this->session->userdata('user_stylesheet')) { ?>
-    	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/<?php echo $this->session->userdata('user_stylesheet');?>">
+		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/<?php echo $this->session->userdata('user_stylesheet');?>/bootstrap.min.css">
+		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/general.css">
+		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/<?php echo $this->session->userdata('user_stylesheet');?>/overrides.css">
 	<?php } else { ?>
-		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/bootstrap.min.css">
+		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/default/bootstrap.min.css">
+		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/general.css">
+		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/default/overrides.css">
 	<?php } ?>
+
     <link rel="stylesheet" href="<?php echo base_url(); ?>assets/fontawesome/css/all.css">
 
 	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/jquery.fancybox.min.css" />
-
-    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/general.css">
 
     <!-- Maps -->
     <link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/js/leaflet/leaflet.css" />
@@ -109,6 +112,8 @@
                     <a class="dropdown-item" href="<?php echo site_url('accumulated');?>" title="Accumulated statistics">Accumulated statistics</a>
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="<?php echo site_url('timeplotter');?>" title="View time when worked">Timeplotter</a>
+					<div class="dropdown-divider"></div>
+					<a class="dropdown-item" href="<?php echo site_url('map');?>" title="Maps of QSOs">Maps</a>
 				</div>
         	</li>
 
@@ -182,6 +187,10 @@
 					<div class="dropdown-divider"></div>
 					
 					<a class="dropdown-item" href="<?php echo site_url('update');?>" title="Update Country Files"><i class="fas fa-sync"></i> Update Country Files</a>
+
+                    <div class="dropdown-divider"></div>
+
+                    <a class="dropdown-item" href="<?php echo site_url('kml');?>" title="KML Export for Google Earth"><i class="fas fa-sync"></i> KML Export</a>
 				</div>
         	</li>
         <?php } ?>

@@ -1,6 +1,6 @@
 <!-- General JS Files used across Cloudlog -->
 <script src="<?php echo base_url(); ?>assets/js/jquery-3.3.1.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+<script src="<?php echo base_url(); ?>assets/js/popper.min.js"></script>
 <script src="<?php echo base_url(); ?>assets/js/jquery.fancybox.min.js"></script>
 <script src="<?php echo base_url(); ?>assets/js/bootstrap.bundle.js"></script>
 <script src="<?php echo base_url(); ?>assets/js/jquery.jclock.js"></script>
@@ -20,8 +20,8 @@
 
 <?php if ($this->uri->segment(1) == "adif") { ?>
     <!-- Javascript used for ADIF Import and Export Areas -->
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/js/tempusdominus-bootstrap-4.min.js"></script>
+    <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/moment.min.js"></script>
+    <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/tempusdominus-bootstrap-4.min.js"></script>
     <script src="<?php echo base_url() ;?>assets/js/sections/adif.js"></script>
 <?php } ?>
 
@@ -131,15 +131,81 @@ $(document).ready(function() {
 </script>
 
 <script>
+var $= jQuery.noConflict();
 $('[data-fancybox]').fancybox({
-  toolbar  : false,
-  smallBtn : true,
-  iframe : {
-    preload : false
-  }
-});
+    toolbar  : false,
+    smallBtn : true,
+    iframe : {
+        preload : false
+    }
+});    
 
 </script>
+
+<?php if ($this->uri->segment(1) == "map" && $this->uri->segment(2) == "custom") { ?>
+<!-- Javascript used for ADIF Import and Export Areas -->
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/moment.min.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/tempusdominus-bootstrap-4.min.js"></script>
+<script type="text/javascript" src="<?php echo base_url();?>assets/js/leaflet/L.Maidenhead.js"></script>
+    <script type="text/javascript" src="<?php echo base_url();?>assets/js/leaflet/leafembed.js"></script>
+    <script type="text/javascript">
+      $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+      });
+
+        <?php if($qra == "set") { ?>
+        var q_lat = <?php echo $qra_lat; ?>;
+        var q_lng = <?php echo $qra_lng; ?>;    
+        <?php } else { ?>
+        var q_lat = 40.313043;
+        var q_lng = -32.695312;
+        <?php } ?>
+
+        var qso_loc = '<?php echo site_url('map/map_data_custom/');?><?php echo urlencode($date_from); ?>/<?php echo urlencode($date_to); ?>';
+        var q_zoom = 2;
+
+      $(document).ready(function(){
+            <?php if ($this->config->item('map_gridsquares') != FALSE) { ?>
+              var grid = "Yes";
+            <?php } else { ?>
+              var grid = "No";
+            <?php } ?>
+            initmap(grid);
+
+      });
+    </script>
+<?php } ?>
+
+<?php if ($this->uri->segment(1) == "map" && $this->uri->segment(2) == "") { ?>
+    <script type="text/javascript" src="<?php echo base_url();?>assets/js/leaflet/L.Maidenhead.js"></script>
+    <script type="text/javascript" src="<?php echo base_url();?>assets/js/leaflet/leafembed.js"></script>
+    <script type="text/javascript">
+      $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+      });
+
+        <?php if($qra == "set") { ?>
+        var q_lat = <?php echo $qra_lat; ?>;
+        var q_lng = <?php echo $qra_lng; ?>;    
+        <?php } else { ?>
+        var q_lat = 40.313043;
+        var q_lng = -32.695312;
+        <?php } ?>
+
+        var qso_loc = '<?php echo site_url('map/map_data');?>';
+        var q_zoom = 2;
+
+      $(document).ready(function(){
+            <?php if ($this->config->item('map_gridsquares') != FALSE) { ?>
+              var grid = "Yes";
+            <?php } else { ?>
+              var grid = "No";
+            <?php } ?>
+            initmap(grid);
+
+      });
+    </script>
+<?php } ?>
 
 <?php if ($this->uri->segment(1) == "" || $this->uri->segment(1) == "dashboard" ) { ?>
     <script type="text/javascript" src="<?php echo base_url();?>assets/js/leaflet/L.Maidenhead.js"></script>
@@ -1193,7 +1259,7 @@ $(document).ready(function(){
 <?php } ?>
 
 <?php if ($this->uri->segment(1) == "dayswithqso") { ?>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <script src="<?php echo base_url(); ?>assets/js/chart.js"></script>
     <script>
         var baseURL= "<?php echo base_url();?>";
         $.ajax({
@@ -1234,7 +1300,10 @@ $(document).ready(function(){
 <?php } ?>
 
 <?php if ($this->uri->segment(1) == "distances") { ?>
-    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="<?php echo base_url(); ?>assets/js/highstock.js"></script>
+    <script src="<?php echo base_url(); ?>assets/js/highstock/exporting.js"></script>
+    <script src="<?php echo base_url(); ?>assets/js/highstock/offline-exporting.js"></script>
+    <script src="<?php echo base_url(); ?>assets/js/highstock/export-data.js"></script>
 <script>
 
   var bands_available = <?php echo $bands_available; ?>;
@@ -1291,7 +1360,7 @@ $(document).ready(function(){
                           xAxis: {
                               labels: {
                                   formatter: function() {
-                                      return this.value * '50' + ' km';
+                                      return this.value * '50' + ' ' + tmp.unit;
                                   }
                               }
                           }
@@ -1329,8 +1398,8 @@ $(document).ready(function(){
 
                   $('#information').html(tmp.qrb.Qsoes + " contacts were plotted.<br /> Your furthest contact was with " + tmp.qrb.Callsign
                       + " in gridsquare "+ tmp.qrb.Grid
-                      +" the distance was "
-                      +tmp.qrb.Distance +"km.");
+                      +"; the distance was "
+                      +tmp.qrb.Distance + tmp.unit +".");
 
                   var chart = new Highcharts.Chart(options);
               }
@@ -1349,8 +1418,8 @@ $(document).ready(function(){
 <?php } ?>
 
     <?php if ($this->uri->segment(2) == "import") { ?>
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/js/tempusdominus-bootstrap-4.min.js"></script>
+        <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/moment.min.js"></script>
+        <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/tempusdominus-bootstrap-4.min.js"></script>
         <script type="text/javascript">
             $(function () {
                 $('#datetimepicker1').datetimepicker({
@@ -1874,7 +1943,10 @@ $(document).ready(function(){
                 success: function (dataofconfirm) {
                     $(".edit-dialog").modal('hide');
                     $(".qso-dialog").modal('hide');
-                    <?php if ($this->uri->segment(1) != "search" && $this->uri->segment(2) != "filter") { ?>location.reload();<?php } ?>
+                    <?php if ($this->uri->segment(1) != "search" && $this->uri->segment(2) != "filter" && $this->uri->segment(1) != "qso") { ?>location.reload();<?php } ?>
+                },
+                error: function(xhr, status, error) {
+                    console.log(xhr.responseText);
                 }
             });
         }
@@ -2040,7 +2112,7 @@ $(document).ready(function(){
     <?php } ?>
 
 <?php if ($this->uri->segment(1) == "accumulated") { ?>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <script src="<?php echo base_url(); ?>assets/js/chart.js"></script>
     <script>
         function accumulatePlot(form) {
             $(".ld-ext-right").addClass('running');
@@ -2177,7 +2249,10 @@ $(document).ready(function(){
 <?php } ?>
 
 <?php if ($this->uri->segment(1) == "timeplotter") { ?>
-    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="<?php echo base_url(); ?>assets/js/highstock.js"></script>
+    <script src="<?php echo base_url(); ?>assets/js/highstock/exporting.js"></script>
+    <script src="<?php echo base_url(); ?>assets/js/highstock/offline-exporting.js"></script>
+    <script src="<?php echo base_url(); ?>assets/js/highstock/export-data.js"></script>
     <script>
 
         function timeplot(form) {
@@ -2276,6 +2351,23 @@ $(document).ready(function(){
             "scrollCollapse": true,
             "paging":         false,
             "scrollX": true
+        });
+    </script>
+<?php } ?>
+
+<?php if ($this->uri->segment(1) == "kml") { ?>
+    <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/moment.min.js"></script>
+    <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/tempusdominus-bootstrap-4.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $('#datetimepicker1').datetimepicker({
+                format: 'DD/MM/YYYY',
+            });
+        });
+        $(function () {
+            $('#datetimepicker2').datetimepicker({
+                format: 'DD/MM/YYYY',
+            });
         });
     </script>
 <?php } ?>

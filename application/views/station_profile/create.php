@@ -182,16 +182,37 @@
 		    <small id="stationSOTAInputHelp" class="form-text text-muted">Station SOTA reference.</small>
 		  </div>
 
+		  <div class="form-group">
+		    <label for="stationSigInput">Signature</label>
+		    <input type="text" class="form-control" name="sig" id="stationSigInput" aria-describedby="stationSigInputHelp">
+		    <small id="stationSigInputHelp" class="form-text text-muted">Station Signature (e.g. WWFF).</small>
+		  </div>
+
+		  <div class="form-group">
+		    <label for="stationSigInfoInput">Signature Info</label>
+		    <input type="text" class="form-control" name="sig_info" id="stationSigInfoInput" aria-describedby="stationSigInfoInputHelp">
+		    <small id="stationSigInfoInput" class="form-text text-muted">Station Signature Info (e.g. DLFF-0029).</small>
+		  </div>
+
             <div class="form-group">
                 <label for="eqslNickname">eQSL QTH Nickname</label>
                 <input type="text" class="form-control" name="eqslnickname" id="eqslNickname" aria-describedby="eqslhelp">
                 <small id="eqslhelp" class="form-text text-muted">eQSL QTH Nickname.</small>
             </div>
 
-            <div class="form-group">
-                <label for="qrzApiKey">QRZ.com Logbook API Key</label>
-                <input type="text" class="form-control" name="qrzapikey" id="qrzApiKey" aria-describedby="qrzApiKeyHelp">
-                <small id="qrzApiKeyHelp" class="form-text text-muted">Find your API key on <a href="https://logbook.qrz.com/logbook" target="_blank">QRZ.com's settings page</a></small>
+            <div class="form-row">
+                <div class="form-group col-sm-6">
+                    <label for="qrzApiKey">QRZ.com Logbook API Key</label>
+                    <input type="text" class="form-control" name="qrzapikey" id="qrzApiKey" aria-describedby="qrzApiKeyHelp">
+                    <small id="qrzApiKeyHelp" class="form-text text-muted">Find your API key on <a href="https://logbook.qrz.com/logbook" target="_blank">QRZ.com's settings page</a></small>
+                </div>
+                <div class="form-group col-sm-6">
+                    <label for="qrzrealtime">QRZ.com Logbook Realtime Upload</label>
+                    <select class="custom-select" id="qrzrealtime" name="qrzrealtime">
+                        <option value="1">Yes</option>
+                        <option value="0" selected>No</option>
+                    </select>
+                </div>
             </div>
 
 			<button type="submit" class="btn btn-primary"><i class="fas fa-plus-square"></i> Create Station Profile</button>

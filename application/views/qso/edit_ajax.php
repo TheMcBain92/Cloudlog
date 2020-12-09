@@ -4,16 +4,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/<?php echo $this->session->userdata('user_stylesheet');?>">
+    <?php if($this->session->userdata('user_stylesheet')) { ?>
+		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/<?php echo $this->session->userdata('user_stylesheet');?>/bootstrap.min.css">
+		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/general.css">
+		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/<?php echo $this->session->userdata('user_stylesheet');?>/overrides.css">
+	<?php } else { ?>
+		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/default/bootstrap.min.css">
+		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/general.css">
+		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/default/overrides.css">
+	<?php } ?>
+    
     <link rel="stylesheet" href="<?php echo base_url(); ?>assets/fontawesome/css/all.css">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
-
-    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/general.css">
+    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/jquery.fancybox.min.css" />
 
     <script src="<?php echo base_url(); ?>assets/js/jquery-3.3.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+    <script src="<?php echo base_url(); ?>assets/js/popper.min.js"></script>
+    <script src="<?php echo base_url(); ?>assets/js/jquery.fancybox.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/js/bootstrap.min.js"></script>
 
 </head>
@@ -165,6 +172,11 @@
                                             ?>
                                         </select>
                                     </div>
+                                    <div class="form-group col-sm6">
+              		                    <label for="transmit_power">Transmit Power (W)</label>
+              		                    <input type="number" step="0.001" class="form-control" id="transmit_power" name="transmit_power" value="<?php echo $qso->COL_TX_PWR; ?>" />
+					                    <small id="powerHelp" class="form-text text-muted">Give power value in Watts. Include only numbers in the input.</small>
+					                </div>
                                 </div>
 
                                 <div class="form-row">
@@ -380,6 +392,16 @@
                                 <div class="form-group">
                                     <label for="sota_ref">SOTA</label>
                                     <input type="text" class="form-control" id="sota_ref" name="sota_ref" value="<?php echo $qso->COL_SOTA_REF; ?>">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="sig">Sig</label>
+                                    <input type="text" class="form-control" id="sig" name="sig" value="<?php echo $qso->COL_SIG; ?>">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="sig_info">Sig Info</label>
+                                    <input type="text" class="form-control" id="sig_info" name="sig_info" value="<?php echo $qso->COL_SIG_INFO; ?>">
                                 </div>
 
                                 <div class="form-group">

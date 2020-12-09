@@ -205,15 +205,36 @@
 		  </div>
 
 		  <div class="form-group">
+		    <label for="stationSigInput">Signature</label>
+		    <input type="text" class="form-control" name="sig" id="stationSigInput" aria-describedby="stationSigInputHelp" value="<?php if(set_value('sig') != "") { echo set_value('sig'); } else { echo $my_station_profile->station_sig; } ?>">
+		    <small id="stationSigInputHelp" class="form-text text-muted">Station Signature (e.g. WWFF)..</small>
+		  </div>
+
+		  <div class="form-group">
+		    <label for="stationSigInfoInput">Signature Information</label>
+		    <input type="text" class="form-control" name="sig_info" id="stationSigInfoInput" aria-describedby="stationSigInfoInputHelp" value="<?php if(set_value('sig_info') != "") { echo set_value('sig_info'); } else { echo $my_station_profile->station_sig_info; } ?>">
+		    <small id="stationSigInfoInputHelp" class="form-text text-muted">Station Signature Info (e.g. DLFF-0029).</small>
+		  </div>
+
+		  <div class="form-group">
 		    <label for="eqslNickname">eQSL QTH Nickname</label>
 		    <input type="text" class="form-control" name="eqslnickname" id="eqslNickname" aria-describedby="eqslhelp" value="<?php if(set_value('eqslnickname') != "") { echo set_value('eqslnickname'); } else { echo $my_station_profile->eqslqthnickname; } ?>">
 		    <small id="eqslhelp" class="form-text text-muted">eQSL QTH Nickname.</small>
 		  </div>
 
-            <div class="form-group">
+            <div class="form-row">
+            <div class="form-group col-sm-6">
                 <label for="qrzApiKey">QRZ.com Logbook API Key</label>
                 <input type="text" class="form-control" name="qrzapikey" id="qrzApiKey" aria-describedby="qrzApiKeyHelp" value="<?php if(set_value('qrzapikey') != "") { echo set_value('qrzapikey'); } else { echo $my_station_profile->qrzapikey; } ?>">
                 <small id="qrzApiKeyHelp" class="form-text text-muted">Find your API key on <a href="https://logbook.qrz.com/logbook" target="_blank">QRZ.com's settings page</a></small>
+            </div>
+                <div class="form-group col-sm-6">
+                    <label for="qrzrealtime">QRZ.com Logbook Realtime Upload</label>
+                    <select class="custom-select" id="qrzrealtime" name="qrzrealtime">
+                        <option value="1" <?php if ($my_station_profile->qrzrealtime == 1) { echo " selected =\"selected\""; } ?>>Yes</option>
+                        <option value="0" <?php if ($my_station_profile->qrzrealtime == 0) { echo " selected =\"selected\""; } ?>>No</option>
+                    </select>
+                </div>
             </div>
 
 			<button type="submit" class="btn btn-primary"><i class="fas fa-plus-square"></i> Update Station Profile</button>
