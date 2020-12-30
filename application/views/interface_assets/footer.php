@@ -398,6 +398,7 @@ $(document).on('change', 'input', function(){
                       $("#mode").val(val2[0].Uplink_Mode);  
                     }
                     $("#band").val(frequencyToBand(val2[0].Uplink_Freq));
+                    $("#band_rx").val(frequencyToBand(val2[0].Downlink_Freq));
                     $("#frequency").val(val2[0].Uplink_Freq);  
                     $("#frequency_rx").val(val2[0].Downlink_Freq); 
                     $("#selectPropagation").val('SAT');
@@ -417,11 +418,9 @@ $(document).on('change', 'input', function(){
   var markers = L.layerGroup();
   var mymap = L.map('qsomap').setView([51.505, -0.09], 13);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  L.tileLayer('<?php echo $this->optionslib->get_option('map_tile_server');?>', {
     maxZoom: 18,
-    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
-      '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-      'Created by Cloudlog',
+    attribution: '<?php echo $this->optionslib->get_option('map_tile_server_copyright');?>',
     id: 'mapbox.streets'
   }).addTo(mymap);
 
@@ -548,6 +547,14 @@ $(document).on('change', 'input', function(){
 });
 });
 
+    //Spacebar moves to the name field when you're entering a callsign
+    //Similar to contesting ux, good for pileups.
+    $("#callsign").on("keypress", function(e) {
+        if (e.which == 32){
+            $("#name").focus();
+            return false; //Eliminate space char
+        }
+    });
 
     // On Key up check and suggest callsigns
     $("#callsign").keyup(function() {
@@ -984,6 +991,20 @@ $(document).on('change', 'input', function(){
       setRst($('.mode') .val());
     });
 
+
+
+  function convert_case(str) {
+    var lower = str.toLowerCase();
+    return lower.replace(/(^| )(\w)/g, function(x) {
+      return x.toUpperCase();
+    });
+  }
+
+  </script>
+
+<?php } ?>
+<?php if ( ($this->uri->segment(1) == "qso" && $_GET['manual'] == 0) || $this->uri->segment(1) == "contesting") { ?>
+    <script>
     function setRst(mode) {
         if(mode == 'JT65' || mode == 'JT65B' || mode == 'JT6C' || mode == 'JTMS' || mode == 'ISCAT' || mode == 'MSK144' || mode == 'JTMSK' || mode == 'QRA64' || mode == 'FT8' || mode == 'FT4' || mode == 'JS8' || mode == 'JT9' || mode == 'JT9-1' || mode == 'ROS'){
             $('#rst_sent').val('-5');
@@ -999,13 +1020,14 @@ $(document).on('change', 'input', function(){
             $('#rst_recv').val('59');
         }
     }
-
-
-  /* Javascript for controlling rig frequency. */
-<?php if ( $_GET['manual'] == 0 ) { ?>
+    </script>
+<?php } ?>
+<?php if ( ($this->uri->segment(1) == "qso" && $_GET['manual'] == 0) || $this->uri->segment(1) == "contesting") { ?>
+    <script>
+        // Javascript for controlling rig frequency.
   var updateFromCAT = function() {
     if($('select.radios option:selected').val() != '0') {
-      radioID = $('select.radios option:selected').val(); 
+      radioID = $('select.radios option:selected').val();
       $.getJSON( "radio/json/" + radioID, function( data ) {
           /* {
               "uplink_freq": "2400210000",
@@ -1022,30 +1044,31 @@ $(document).on('change', 'input', function(){
           if (data.downlink_freq != "")
           {
             $('#frequency_rx').val(data.downlink_freq);
+            $("#band_rx").val(frequencyToBand(data.downlink_freq));
           }
 
           old_mode = $(".mode").val();
           if (data.mode == "LSB" || data.mode == "USB" || data.mode == "SSB") {
             $(".mode").val('SSB');
           } else {
-            $(".mode").val(data.mode);  
+            $(".mode").val(data.mode);
           }
 
           if (old_mode !== $(".mode").val()) {
             // Update RST on mode change via CAT
             setRst($(".mode").val());
           }
-          $("#sat_name").val(data.satname);  
-          $("#sat_mode").val(data.satmode);  
+          $("#sat_name").val(data.satname);
+          $("#sat_mode").val(data.satmode);
 
           // Display CAT Timeout warnng based on the figure given in the config file
             var minutes = Math.floor(<?php echo $this->config->item('cat_timeout_interval'); ?> / 60);
 
             if(data.updated_minutes_ago > minutes) {
               if($('.radio_timeout_error').length == 0) {
-                $('.qso_panel').prepend('<div class="alert alert-danger radio_timeout_error" role="alert">Radio connection timed-out: ' + $('select.radios option:selected').text() + ' data is ' + data.updated_minutes_ago + ' minutes old.</div>');  
+                $('.qso_panel').prepend('<div class="alert alert-danger radio_timeout_error" role="alert">Radio connection timed-out: ' + $('select.radios option:selected').text() + ' data is ' + data.updated_minutes_ago + ' minutes old.</div>');
               } else {
-                $('.radio_timeout_error').text('Radio connection timed-out: ' + $('select.radios option:selected').text() + ' data is ' + data.updated_minutes_ago + ' minutes old.');    
+                $('.radio_timeout_error').text('Radio connection timed-out: ' + $('select.radios option:selected').text() + ' data is ' + data.updated_minutes_ago + ' minutes old.');
               }
             } else {
               $(".radio_timeout_error" ).remove();
@@ -1064,10 +1087,11 @@ $(document).on('change', 'input', function(){
   // If radio isn't SatPC32 clear sat_name and sat_mode
   $( ".radios" ).change(function() {
       if ($(".radios option:selected").text() != "SatPC32") {
-        $("#sat_name").val("");  
-        $("#sat_mode").val("");  
-        $("#frequency").val("");  
-        $("#frequency_rx").val(""); 
+        $("#sat_name").val("");
+        $("#sat_mode").val("");
+        $("#frequency").val("");
+        $("#frequency_rx").val("");
+        $("#band_rx").val("");
         $("#selectPropagation").val($("#selectPropagation option:first").val());
       }
 
@@ -1076,16 +1100,6 @@ $(document).on('change', 'input', function(){
       }
 
   });
-
-<?php } ?>
-
-  function convert_case(str) {
-    var lower = str.toLowerCase();
-    return lower.replace(/(^| )(\w)/g, function(x) {
-      return x.toUpperCase();
-    });
-  }
-
   </script>
 
 <?php } ?>
@@ -1095,10 +1109,9 @@ $(document).on('change', 'input', function(){
 
   var mymap = L.map('map').setView([lat,long], 5);
 
-  L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+  L.tileLayer('<?php echo $this->optionslib->get_option('map_tile_server');?>', {
     maxZoom: 18,
-    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>, ' +
-      'Generated by <a href="http://www.cloudlog.co.uk/">Cloudlog</a>',
+    attribution: '<?php echo $this->optionslib->get_option('map_tile_server_copyright');?>',
     id: 'mapbox.streets'
   }).addTo(mymap);
 
@@ -1146,11 +1159,9 @@ $(document).ready(function(){
 
 <script>
 
-  var layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  var layer = L.tileLayer('<?php echo $this->optionslib->get_option('map_tile_server');?>', {
     maxZoom: 18,
-    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
-      '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-      'Created by Cloudlog',
+    attribution: '<?php echo $this->optionslib->get_option('map_tile_server_copyright');?>',
     id: 'mapbox.streets'
   });
 
@@ -1340,7 +1351,7 @@ $(document).ready(function(){
                           renderTo: 'graphcontainer'
                       },
                       title: {
-                          text: 'Distance distribution'
+                          text: 'Distance Distribution'
                       },
                       xAxis: {
                           categories: [],
@@ -1503,10 +1514,9 @@ $(document).ready(function(){
                                 var callsign = $("#callsign").text();
                                 var mymap = L.map('mapqso').setView([lat,long], 5);
 
-                                L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+                                L.tileLayer('<?php echo $this->optionslib->get_option('map_tile_server');?>', {
                                     maxZoom: 18,
-                                    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>, ' +
-                                        'Generated by <a href="http://www.cloudlog.co.uk/">Cloudlog</a>',
+                                    attribution: '<?php echo $this->optionslib->get_option('map_tile_server_copyright');?>',
                                     id: 'mapbox.streets'
                                 }).addTo(mymap);
 
@@ -2292,7 +2302,7 @@ $(document).ready(function(){
                     renderTo: 'container'
                 },
                 title: {
-                    text: 'Time distribution'
+                    text: 'Time Distribution'
                 },
                 xAxis: {
                     categories: [],
@@ -2528,5 +2538,138 @@ function deleteQsl(id) {
         });
     }
 </script>
+<?php if ($this->uri->segment(1) == "contesting") { ?>
+    <script src="<?php echo base_url() ;?>assets/js/sections/contesting.js"></script>
+    <script>
+        function logQso() {
+            if ($("#callsign").val().length > 0) {
+
+                $('.callsign-suggestions').text("");
+
+                var table = $('.qsotable').DataTable();
+
+                var data = [[$("#start_date").val()+ ' ' + $("#start_time").val(),
+                    $("#callsign").val().toUpperCase(),
+                    $("#band").val(),
+                    $("#mode").val(),
+                    $("#rst_sent").val(),
+                    $("#rst_recv").val(),
+                    $("#exch_sent").val(),
+                    $("#exch_recv").val()]];
+
+                table.rows.add(data).draw();
+
+                var baseURL= "<?php echo base_url();?>";
+                var formdata = new FormData(document.getElementById("qso_input"));
+                $.ajax({
+                    url: baseURL + 'index.php/qso/saveqso',
+                    type: 'post',
+                    data: formdata,
+                    processData: false,
+                    contentType: false,
+                    enctype: 'multipart/form-data',
+                    success: function (html) {
+                        if (localStorage.getItem("qso") == null) {
+                            localStorage.setItem("qso", $("#start_date").val()+ ' ' + $("#start_time").val() + ',' + $("#callsign").val().toUpperCase() + ',' + $("#contestname").val());
+                        }
+
+                        $('#name').val("");
+
+                        $('#callsign').val("");
+                        $('#comment').val("");
+                        $('#exch_recv').val("");
+                        if ($('input[name=exchangeradio]:checked', '#qso_input').val() == "serial") {
+                            $("#exch_sent").val(+$("#exch_sent").val() + 1);
+                        }
+                        $("#callsign").focus();
+
+                        // Store contest session
+                        localStorage.setItem("contestid", $("#contestname").val());
+                        localStorage.setItem("exchangetype", $('input[name=exchangeradio]:checked', '#qso_input').val());
+                        localStorage.setItem("exchangesent", $("#exch_sent").val());
+                    }
+                });
+            }
+        }
+
+        // We are restoring the settings in the contest logging form here
+        function restoreContestSession() {
+            var contestname = localStorage.getItem("contestid");
+
+            if (contestname != null) {
+                $("#contestname").val(contestname);
+            }
+
+            var exchangetype = localStorage.getItem("exchangetype");
+
+            if (exchangetype == "other") {
+                $("[name=exchangeradio]").val(["other"]);
+            }
+
+            var exchangesent = localStorage.getItem("exchangesent");
+
+            if (exchangesent != null) {
+                $("#exch_sent").val(exchangesent);
+            }
+
+            if (localStorage.getItem("qso") != null) {
+                var baseURL= "<?php echo base_url();?>";
+                //alert(localStorage.getItem("qso"));
+                var qsodata = localStorage.getItem("qso");
+                $.ajax({
+                    url: baseURL + 'index.php/contesting/getSessionQsos',
+                    type: 'post',
+                    data: {'qso': qsodata,},
+                    success: function (html) {
+                        var mode = '';
+                        var sentexchange = '';
+                        var receivedexchange = '';
+                        $.each(html, function(){
+                            if (this.col_submode == null || this.col_submode == '') {
+                                mode = this.col_mode;
+                            } else {
+                                mode = this.col_submode;
+                            }
+
+                            if (this.col_srx == null || this.col_srx == '') {
+                                receivedexchange = this.col_srx_string;
+                            } else {
+                                receivedexchange = this.col_srx;
+                            }
+
+                            if (this.col_stx == null || this.col_stx == '') {
+                                sentexchange = this.col_stx_string;
+                            } else {
+                                sentexchange = this.col_stx;
+                            }
+
+                            $(".qsotable tbody").prepend('<tr>' +
+                                '<td>'+ this.col_time_on + '</td>' +
+                                '<td>'+ this.col_call + '</td>' +
+                                '<td>'+ this.col_band + '</td>' +
+                                '<td>'+ mode + '</td>' +
+                                '<td>'+ this.col_rst_sent + '</td>' +
+                                '<td>'+ this.col_rst_rcvd + '</td>' +
+                                '<td>'+ sentexchange + '</td>' +
+                                '<td>'+ receivedexchange + '</td>' +
+                                '</tr>');
+                        });
+
+                        $('.qsotable').DataTable({
+                            "pageLength": 25,
+                            responsive: false,
+                            "scrollY":        "400px",
+                            "scrollCollapse": true,
+                            "paging":         false,
+                            "scrollX": true,
+                            "order": [[ 0, "desc" ]]
+                        });
+                    }
+                });
+            }
+        }
+    </script>
+
+<?php } ?>
   </body>
 </html>

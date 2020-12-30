@@ -20,7 +20,33 @@ class Logbook_model extends CI_Model {
 
     if($this->input->post('sat_name')) {
         $prop_mode = "SAT";
-    } 
+    }
+
+    // Contest exchange, need to separate between serial and other type of exchange
+    if($this->input->post('exchangeradio')) {
+        if($this->input->post('exchangeradio') == "serial") {
+            $srx = $this->input->post('exch_recv');
+            $stx = $this->input->post('exch_sent');
+            $srx_string = null;
+            $stx_string = null;
+        } else {
+            $srx = null;
+            $stx = null;
+            $srx_string = $this->input->post('exch_recv');
+            $stx_string = $this->input->post('exch_sent');
+        }
+    } else {
+        $srx_string = null;
+        $stx_string = null;
+        $srx = null;
+        $stx = null;
+    }
+
+    if($this->input->post('contestname')) {
+        $contestid = $this->input->post('contestname');
+    } else {
+        $contestid = null;
+    }
 
     if($this->session->userdata('user_locator')){
         $locator = $this->session->userdata('user_locator');
@@ -78,6 +104,7 @@ class Logbook_model extends CI_Model {
             'COL_TIME_OFF' => $datetime,
             'COL_CALL' => strtoupper(trim($this->input->post('callsign'))),
             'COL_BAND' => $this->input->post('band'),
+            'COL_BAND_RX' => $this->input->post('band_rx'),
             'COL_FREQ' => $this->parse_frequency($this->input->post('freq_display')),
             'COL_MODE' => $mode,
             'COL_SUBMODE' => $submode,
@@ -101,15 +128,17 @@ class Logbook_model extends CI_Model {
             'COL_IOTA' => trim($this->input->post('iota_ref')),
             'COL_DISTANCE' => "0",
             'COL_FREQ_RX' => $this->parse_frequency($this->input->post('freq_display_rx')),
-            'COL_BAND_RX' => null,
             'COL_ANT_AZ' => null,
             'COL_ANT_EL' => null,
             'COL_A_INDEX' => null,
             'COL_AGE' => null,
             'COL_TEN_TEN' => null,
             'COL_TX_PWR' => $tx_power,
-            'COL_STX' => null,
-            'COL_SRX' => null,
+            'COL_STX' => $stx,
+            'COL_SRX' => $srx,
+            'COL_STX_STRING' => $stx_string,
+            'COL_SRX_STRING' => $srx_string,
+            'COL_CONTEST_ID' => $contestid,
             'COL_NR_BURSTS' => null,
             'COL_NR_PINGS' => null,
             'COL_MAX_BURSTS' => null,
@@ -182,7 +211,7 @@ class Logbook_model extends CI_Model {
         $data['COL_LOTW_QSL_RCVD'] = 'N';
     }
 
-    $this->add_qso($data);
+    $this->add_qso($data, $skipexport = false);
   }
 
   public function check_station($id){
@@ -328,7 +357,7 @@ class Logbook_model extends CI_Model {
 
   }
 
-  function add_qso($data) {
+  function add_qso($data, $skipexport = false) {
 
     if ($data['COL_DXCC'] == "Not Found"){
       $data['COL_DXCC'] = NULL;
@@ -345,8 +374,8 @@ class Logbook_model extends CI_Model {
 
     $result = $this->exists_qrz_api_key($data['station_id']);
 
-    // Push qso to qrz if apikey is set, and realtime upload is enabled
-    if (isset($result->qrzapikey) && $result->qrzrealtime == 1) {
+    // Push qso to qrz if apikey is set, and realtime upload is enabled, and we're not importing an adif-file
+    if (isset($result->qrzapikey) && $result->qrzrealtime == 1 && !$skipexport) {
       $CI =& get_instance();
       $CI->load->library('AdifHelper');
       $qso = $this->get_qso($last_id)->result();
@@ -1426,13 +1455,21 @@ class Logbook_model extends CI_Model {
       $this->db->select('station_profile.*, '.$this->config->item('table_name').'.COL_PRIMARY_KEY, '.$this->config->item('table_name').'.COL_TIME_ON, '.$this->config->item('table_name').'.COL_CALL, '.$this->config->item('table_name').'.COL_MODE, '.$this->config->item('table_name').'.COL_SUBMODE, '.$this->config->item('table_name').'.COL_BAND, '.$this->config->item('table_name').'.COL_COMMENT, '.$this->config->item('table_name').'.COL_RST_SENT, '.$this->config->item('table_name').'.COL_PROP_MODE, '.$this->config->item('table_name').'.COL_SAT_NAME, '.$this->config->item('table_name').'.COL_SAT_MODE');
       $this->db->from('station_profile');
       $this->db->join($this->config->item('table_name'),'station_profile.station_id = '.$this->config->item('table_name').'.station_id AND station_profile.eqslqthnickname != ""','left');
+      $this->db->where($this->config->item('table_name').'.COL_CALL !=', '');
       $this->db->where($this->config->item('table_name').'.COL_EQSL_QSL_SENT !=', 'Y');
       $this->db->where($this->config->item('table_name').'.COL_EQSL_QSL_SENT !=', 'I');
       $this->db->or_where(array($this->config->item('table_name').'.COL_EQSL_QSL_SENT' => NULL));
       return $this->db->get();
     }
 
-    function import($record, $station_id = "0", $skipDuplicate, $markLotw, $dxccAdif, $markQrz) {
+    /*
+     * $skipDuplicate - used in ADIF import to skip duplicate checking when importing QSOs
+     * $markLoTW - used in ADIF import to mark QSOs as exported to LoTW when importing QSOs
+     * $dxccAdif - used in ADIF import to determine if DXCC From ADIF is used, or if Cloudlog should try to guess
+     * $markQrz - used in ADIF import to mark QSOs as exported to QRZ Logbook when importing QSOs
+     * $skipexport - used in ADIF import to skip the realtime upload to QRZ Logbook when importing QSOs from ADIF
+     */
+    function import($record, $station_id = "0", $skipDuplicate, $markLotw, $dxccAdif, $markQrz, $skipexport = false) {
         $CI =& get_instance();
         $CI->load->library('frequency');
         $my_error = "";
@@ -1933,7 +1970,7 @@ class Logbook_model extends CI_Model {
             }
 
             // Save QSO
-            $this->add_qso($data);
+            $this->add_qso($data, $skipexport);
         } else {
           $my_error .= "Date/Time: ".$time_on." Callsign: ".$record['call']." Band: ".$band."  Duplicate<br>";
         }

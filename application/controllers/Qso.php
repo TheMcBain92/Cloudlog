@@ -62,6 +62,7 @@ class QSO extends CI_Controller {
                 'start_time' => $this->input->post('start_time'),
 				'time_stamp' => time(),
 				'band' => $this->input->post('band'),
+				'band_rx' => $this->input->post('band_rx'),
 				'freq' => $this->input->post('freq_display'),
 				'freq_rx' => $this->input->post('freq_display_rx'),
 				'mode' => $this->input->post('mode'),
@@ -98,6 +99,14 @@ class QSO extends CI_Controller {
 			$this->load->view('interface_assets/footer');
 		}
 	}
+
+	/*
+	 * This is used for contest-logging and the ajax-call
+	 */
+	public function saveqso() {
+        $this->load->model('logbook_model');
+        $this->logbook_model->create_qso();
+    }
 	
 	function edit() {
 	
