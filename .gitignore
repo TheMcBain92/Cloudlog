@@ -15,8 +15,3 @@
 .DS_Store
 sync.sh
 *.p12
-updates/cty.xml.gz
-favicon.ico
-favicon.icoold
-*dwsync.xml
-/favicons/*
