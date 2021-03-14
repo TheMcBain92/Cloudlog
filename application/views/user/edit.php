@@ -26,7 +26,7 @@
 	<?php } ?>
 
 	<?php $this->load->helper('form'); ?>
-		
+
 	<form method="post" action="<?php echo site_url('user/edit')."/".$this->uri->segment(3); ?>" name="users" autocomplete="off">
 	<div class="row">
 	    <div class="col-md">
@@ -66,7 +66,7 @@
 				<div class="card-body">
 					<div class="form-group">
 						<label>Level</label>
-						
+
 						<?php if($this->session->userdata('user_type') == 99) { ?>
 						<select class="custom-select" name="user_type">
 						<?php
@@ -76,7 +76,7 @@
 							<option value="<?php echo $key; ?>" <?php if($user_type == $key) { echo "selected=\"selected\""; } ?>><?php echo $val; ?></option>
 							<?php } ?>
 						</select>
-						<?php } else { 
+						<?php } else {
 							$l = $this->config->item('auth_level');
 							echo $l[$user_type];
 						}?>
@@ -93,7 +93,6 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label>Stylesheet</label>
-
                         <select class="custom-select" id="user_stylesheet" name="user_stylesheet" required>
                             <option value='default' <?php if($user_stylesheet == "default") { echo "selected=\"selected\""; } ?>>Default</option>
                             <option value='blue' <?php if($user_stylesheet == "blue") { echo "selected=\"selected\""; } ?>>Blue</option>
@@ -167,7 +166,10 @@
 							<option value="m/d/y" <?php if($user_date_format == "m/d/y") { echo "selected=\"selected\""; } ?>><?php echo date('m/d/y'); ?></option>
 							<option value="m/d/Y" <?php if($user_date_format == "m/d/Y") { echo "selected=\"selected\""; } ?>><?php echo date('m/d/Y'); ?></option>
 							<option value="d.m.Y" <?php if($user_date_format == "d.m.Y") { echo "selected=\"selected\""; } ?>><?php echo date('d.m.Y'); ?></option>
+							<option value="y/m/d" <?php if($user_date_format == "y/m/d") { echo "selected=\"selected\""; } ?>><?php echo date('y/m/d'); ?></option>
 							<option value="Y-m-d" <?php if($user_date_format == "Y-m-d") { echo "selected=\"selected\""; } ?>><?php echo date('Y-m-d'); ?></option>
+							<option value="M d, Y" <?php if($user_date_format == "M d, Y") { echo "selected=\"selected\""; } ?>><?php echo date('M d, Y'); ?></option>
+							<option value="M d, y" <?php if($user_date_format == "M d, y") { echo "selected=\"selected\""; } ?>><?php echo date('M d, y'); ?></option>
 						</select>
 						<small id="SelectDateFormatHelp" class="form-text text-muted">Select how you would like dates shown when logged into your account.</small>
 					</div>
@@ -232,9 +234,9 @@
 							<?php if(isset($eqslpassword_error)) { echo "<div class=\"small error\">".$eqslpassword_error."</div>"; } else { ?>
 							<div class="small form-text text-muted">Leave blank to keep existing password</div></td>
 							<?php } ?>
-					</div>				
+					</div>
 				</div>
-			</div>    	
+			</div>
 	    </div>
 	</div>
 
@@ -265,7 +267,31 @@
 				</div>
 			</div>
 	    </div>
+
 	</div>
+		<br>
+		<div class="row">
+			<!-- Club Log -->
+			<div class="col-md">
+				<div class="card">
+					<div class="card-header">
+						Summits On The Air
+					</div>
+					<div class="card-body">
+						<div class="form-group">
+							<label for="sotalookup">SOTA auto lookup gridsquare and name for summit.</label>
+							<select class="custom-select" id="sotalookup" name="user_sota_lookup">
+								<option value="1" <?php if ($user_sota_lookup == 1) { echo " selected =\"selected\""; } ?>><?php echo $this->lang->line('general_word_yes'); ?></option>
+								<option value="0" <?php if ($user_sota_lookup == 0) { echo " selected =\"selected\""; } ?>><?php echo $this->lang->line('general_word_no'); ?></option>
+							</select>
+							<div class="small form-text text-muted">If this is set, name and gridsquare is fetched from the API and filled in location and locator.</div></td>
+						</div>
+
+					</div>
+				</div>
+			</div>
+
+		</div>
 
 	<input type="hidden" name="id" value="<?php echo $this->uri->segment(3); ?>" />
 	<br>

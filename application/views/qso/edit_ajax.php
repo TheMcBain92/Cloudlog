@@ -13,7 +13,7 @@
 		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/general.css">
 		<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/default/overrides.css">
 	<?php } ?>
-    
+
     <link rel="stylesheet" href="<?php echo base_url(); ?>assets/fontawesome/css/all.css">
 
     <link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/jquery.fancybox.min.css" />
@@ -39,7 +39,7 @@
                                 <a class="nav-item nav-link active" id="nav-qso-tab" data-toggle="tab" href="#nav-qso" role="tab" aria-controls="nav-qso" aria-selected="true">QSO</a>
                                 <a class="nav-item nav-link" id="nav-satellites-tab" data-toggle="tab" href="#nav-satellites" role="tab" aria-controls="nav-awards" aria-selected="true">Sats</a>
                                 <a class="nav-item nav-link" id="nav-awards-tab" data-toggle="tab" href="#nav-awards" role="tab" aria-controls="nav-awards" aria-selected="true">Awards</a>
-                                <a class="nav-item nav-link" id="nav-notes-tab" data-toggle="tab" href="#nav-notes" role="tab" aria-controls="nav-notes" aria-selected="false">Notes</a>
+                                <a class="nav-item nav-link" id="nav-qso-notes-tab" data-toggle="tab" href="#nav-qso-notes" role="tab" aria-controls="nav-qso-notes" aria-selected="false">Notes</a>
                                 <a class="nav-item nav-link" id="nav-qsl-tab" data-toggle="tab" href="#nav-qsl" role="tab" aria-controls="nav-qsl" aria-selected="false">QSL</a>
                                 <a class="nav-item nav-link" id="nav-station-tab" data-toggle="tab" href="#nav-station" role="tab" aria-controls="nav-station" aria-selected="false">Station</a>
                             </div>
@@ -79,7 +79,7 @@
 
                                     <div class="form-group col-sm-6">
                                     <label for="freq">RX Frequency</label>
-                                    <input type="text" class="form-control" id="freq" name="freq_display_rx" value="<?php if($qso->COL_FREQ_RX != "0") { echo $qso->COL_FREQ_RX; } ?>">
+                                    <input type="text" class="form-control" id="freqrx" name="freq_display_rx" value="<?php if($qso->COL_FREQ_RX != "0") { echo $qso->COL_FREQ_RX; } ?>">
                                     </div>
                                 </div>
 
@@ -372,6 +372,11 @@
                                 </div>
 
                                 <div class="form-group">
+                                    <label for="stationCntyInput">USA County</label>
+                                    <input disabled="disabled" class="form-control" id="stationCntyInput" type="text" name="usa_county" value="<?php echo $qso->COL_CNTY; ?>" />
+                                </div>
+
+                                <div class="form-group">
                                     <label for="iota_ref">IOTA</label>
                                     <select class="custom-select" id="iota_ref" name="iota_ref">
                                         <option value =""></option>
@@ -411,7 +416,7 @@
                             </div>
 
                             <!-- Notes Panel Contents -->
-                            <div class="tab-pane fade" id="nav-notes" role="tabpanel" aria-labelledby="nav-notes-tab">
+                            <div class="tab-pane fade" id="nav-qso-notes" role="tabpanel" aria-labelledby="nav-qso-notes-tab">
                                 <div class="form-group">
                                     <label for="notes">Notes (for internal usage only)</label>
                                     <textarea  type="text" class="form-control" id="notes" name="notes" rows="10"><?php echo $qso->COL_NOTES; ?></textarea>
@@ -579,8 +584,8 @@
                         <input type="hidden" name="id" value="<?php echo $qso->COL_PRIMARY_KEY; ?>" />
 
                         <div class="actions">
-                            <button id="show" type="button" name="download" class="btn btn-primary" onclick="qso_save();">Save changes</button>
-                            <a class="btn btn-danger float-right" href="javascript:qso_delete(<?php echo $qso->COL_PRIMARY_KEY; ?>, '<?php echo $qso->COL_CALL; ?>')"><i class="fas fa-trash-alt"></i> Delete QSO</a>
+                            <a class="btn btn-danger" href="javascript:qso_delete(<?php echo $qso->COL_PRIMARY_KEY; ?>, '<?php echo $qso->COL_CALL; ?>')"><i class="fas fa-trash-alt"></i> Delete QSO</a>
+                            <button id="show" type="button" name="download" class="btn btn-primary float-right" onclick="qso_save();"><i class="fas fa-save"></i> Save changes</button>
                         </div>
                     </div>
                 </div>
