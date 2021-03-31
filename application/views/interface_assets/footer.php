@@ -141,6 +141,98 @@ $('[data-fancybox]').fancybox({
     }
 });
 
+// Here we capture ALT-L to invoice the Quick lookup
+document.onkeyup = function(e) {
+	// ALT-W wipe
+	if (e.altKey && e.which == 76) {
+		spawnLookupModal();
+	}
+};
+
+// This displays the dialog with the form and it's where the resulttable is displayed
+function spawnLookupModal() {
+	$.ajax({
+		url: base_url + 'index.php/lookup',
+		type: 'post',
+		success: function (html) {
+			BootstrapDialog.show({
+				title: 'Quick lookup',
+				size: BootstrapDialog.SIZE_WIDE,
+				cssClass: 'lookup-dialog',
+				nl2br: false,
+				message: html,
+				onshown: function(dialog) {
+					$('#quicklookuptype').change(function(){
+						var type = $('#quicklookuptype').val();
+						if (type == "dxcc") {
+							$('#quicklookupdxcc').show();
+							$('#quicklookupiota').hide();
+							$('#quicklookupcqz').hide();
+							$('#quicklookupwas').hide();
+							$('#quicklookuptext').hide();
+						} else if (type == "iota") {
+							$('#quicklookupiota').show();
+							$('#quicklookupdxcc').hide();
+							$('#quicklookupcqz').hide();
+							$('#quicklookupwas').hide();
+							$('#quicklookuptext').hide();
+						} else if (type == "grid" || type == "sota" || type == "wwff") {
+							$('#quicklookuptext').show();
+							$('#quicklookupiota').hide();
+							$('#quicklookupdxcc').hide();
+							$('#quicklookupcqz').hide();
+							$('#quicklookupwas').hide();
+						} else if (type == "cqz") {
+							$('#quicklookupcqz').show();
+							$('#quicklookupiota').hide();
+							$('#quicklookupdxcc').hide();
+							$('#quicklookupwas').hide();
+							$('#quicklookuptext').hide();
+						} else if (type == "was") {
+							$('#quicklookupwas').show();
+							$('#quicklookupcqz').hide();
+							$('#quicklookupiota').hide();
+							$('#quicklookupdxcc').hide();
+							$('#quicklookuptext').hide();
+						}
+					});
+				},
+				buttons: [{
+					label: 'Close',
+					action: function (dialogItself) {
+						dialogItself.close();
+					}
+				}]
+			});
+		}
+	});
+}
+
+// This function executes the call to the backend for fetching queryresult and displays the table in the dialog
+function getLookupResult() {
+	$(".ld-ext-right").addClass('running');
+	$(".ld-ext-right").prop('disabled', true);
+	$.ajax({
+		url: base_url + 'index.php/lookup/search',
+		type: 'post',
+		data: {
+			type: $('#quicklookuptype').val(),
+			dxcc: $('#quicklookupdxcc').val(),
+			was:  $('#quicklookupwas').val(),
+			grid: $('#quicklookuptext').val(),
+			cqz:  $('#quicklookupcqz').val(),
+			iota: $('#quicklookupiota').val(),
+			sota: $('#quicklookuptext').val(),
+			wwff: $('#quicklookuptext').val(),
+		},
+		success: function (html) {
+			$('#lookupresulttable').html(html);
+			$(".ld-ext-right").removeClass('running');
+			$(".ld-ext-right").prop('disabled', false);
+		}
+	});
+}
+
 </script>
 
 <?php if ($this->uri->segment(1) == "map" && $this->uri->segment(2) == "custom") { ?>
@@ -1443,110 +1535,7 @@ $(document).ready(function(){
         <?php } ?>
 
     <?php if ($this->uri->segment(1) == "mode") { ?>
-        <script>
-            $('.modetable').DataTable({
-                "pageLength": 25,
-                responsive: false,
-                ordering: false,
-                "scrollY":        "500px",
-                "scrollCollapse": true,
-                "paging":         false,
-                "scrollX": true
-            });
-
-            function createModeDialog() {
-                var baseURL= "<?php echo base_url();?>";
-                $.ajax({
-                    url: baseURL + 'index.php/mode/create',
-                    type: 'post',
-                    success: function(html) {
-                        BootstrapDialog.show({
-                            title: 'Create mode',
-                            size: BootstrapDialog.SIZE_WIDE,
-                            cssClass: 'create-mode-dialog',
-                            nl2br: false,
-                            message: html,
-                            buttons: [{
-                                label: 'Close',
-                                action: function (dialogItself) {
-                                    dialogItself.close();
-                                }
-                            }]
-                        });
-                    }
-                });
-            }
-
-            function createMode(form) {
-                var baseURL= "<?php echo base_url();?>";
-                if (form.mode.value != '') {
-                    $.ajax({
-                        url: baseURL + 'index.php/mode/create',
-                        type: 'post',
-                        data: {'mode': form.mode.value,
-                            'submode': form.submode.value,
-                            'qrgmode': form.qrgmode.value,
-                            'active': form.active.value},
-                        success: function(html) {
-                            location.reload();
-                        }
-                    });
-                }
-            }
-
-            function deactivateMode(modeid) {
-                var baseURL= "<?php echo base_url();?>";
-                $.ajax({
-                    url: baseURL + 'index.php/mode/deactivate',
-                    type: 'post',
-                    data: {'id': modeid },
-                    success: function(html) {
-                        $(".mode_" + modeid).text('not active');
-                        $('.btn_'+modeid).html('Activate');
-                        $('.btn_'+modeid).attr('onclick', 'activateMode('+modeid+')')
-                    }
-                });
-            }
-
-            function activateMode(modeid) {
-                var baseURL= "<?php echo base_url();?>";
-                $.ajax({
-                    url: baseURL + 'index.php/mode/activate',
-                    type: 'post',
-                    data: {'id': modeid },
-                    success: function(html) {
-                        $('.mode_'+modeid).text('active');
-                        $('.btn_'+modeid).html('Deactivate');
-                        $('.btn_'+modeid).attr('onclick', 'deactivateMode('+modeid+')')
-                    }
-                });
-            }
-
-            function deleteMode(id, mode) {
-                BootstrapDialog.confirm({
-                    title: 'DANGER',
-                    message: 'Warning! Are you sure you want to delete the following mode: ' + mode + '?'  ,
-                    type: BootstrapDialog.TYPE_DANGER,
-                    closable: true,
-                    draggable: true,
-                    btnOKClass: 'btn-danger',
-                    callback: function(result) {
-                        if(result) {
-                            var baseURL= "<?php echo base_url();?>";
-                            $.ajax({
-                                url: baseURL + 'index.php/mode/delete',
-                                type: 'post',
-                                data: {'id': id
-                                },
-                                success: function(data) {
-                                    $(".mode_" + id).parent("tr:first").remove(); // removes mode from table
-                                }
-                            });
-                        }
-                    }
-                });
-            }
-        </script>
+		<script src="<?php echo base_url(); ?>assets/js/sections/mode.js"></script>
     <?php } ?>
 
 <?php if ($this->uri->segment(1) == "accumulated") { ?>
@@ -1559,92 +1548,7 @@ $(document).ready(function(){
     <script src="<?php echo base_url(); ?>assets/js/highstock/exporting.js"></script>
     <script src="<?php echo base_url(); ?>assets/js/highstock/offline-exporting.js"></script>
     <script src="<?php echo base_url(); ?>assets/js/highstock/export-data.js"></script>
-    <script>
-
-        function timeplot(form) {
-            $(".ld-ext-right").addClass('running');
-            $(".ld-ext-right").prop('disabled', true);
-            $(".alert").remove();
-            var baseURL= "<?php echo base_url();?>";
-            $.ajax({
-                url: baseURL+'index.php/timeplotter/getTimes',
-                type: 'post',
-                data: {'band': form.band.value, 'dxcc': form.dxcc.value, 'cqzone': form.cqzone.value},
-                success: function(tmp) {
-                    $(".ld-ext-right").removeClass('running');
-                    $(".ld-ext-right").prop('disabled', false);
-                    if (tmp.ok == 'OK') {
-                        plotTimeplotterChart(tmp);
-                    }
-                    else {
-                        $("#container").remove();
-                        $("#info").remove();
-                        $("#timeplotter_div").append('<div class="alert alert-danger"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>\n' +
-                            tmp.error +
-                            '</div>');
-                    }
-                }
-            });
-        }
-
-        function plotTimeplotterChart(tmp) {
-            $("#container").remove();
-            $("#info").remove();
-            $("#timeplotter_div").append('<p id="info">' + tmp.qsocount + ' contacts were plotted.</p><div id="container" style="height: 600px;"></div>');
-            var options = {
-                chart: {
-                    type: 'column',
-                    zoomType: 'xy',
-                    renderTo: 'container'
-                },
-                title: {
-                    text: 'Time Distribution'
-                },
-                xAxis: {
-                    categories: [],
-                    crosshair: true,
-                    type: "category",
-                    min:0,
-                    max:47,
-                },
-                yAxis: {
-                    title: {
-                        text: '# QSOs'
-                    }
-                },
-                rangeSelector: {
-                    selected: 1
-                },
-                tooltip: {
-                    formatter: function () {
-                        if(this.point) {
-                            return "Time: " + options.xAxis.categories[this.point.x] +
-                                "<br />Callsign(s) worked (max 5): " + myComments[this.point.x] +
-                                "<br />Number of QSOs: <strong>" + series.data[this.point.x] + "</strong>";
-                        }
-                    }
-                },
-                series: []
-            };
-            var myComments=[];
-
-            var series = {
-                data: []
-            };
-
-            $.each(tmp.qsodata, function(){
-                myComments.push(this.calls);
-                options.xAxis.categories.push(this.time);
-                series.name = 'Number of QSOs';
-                series.data.push(this.count);
-            });
-
-            options.series.push(series);
-
-            var chart = new Highcharts.Chart(options);
-        }
-
-    </script>
+	<script src="<?php echo base_url(); ?>assets/js/sections/timeplot.js"></script>
 <?php } ?>
 
 <?php if ($this->uri->segment(1) == "qsl") { ?>
@@ -2075,10 +1979,9 @@ function deleteQsl(id) {
 </script>
 <?php } ?>
 
-<?php if ($this->uri->segment(1) == "contesting" && $this->uri->segment(2) == "add") { ?>
+<?php if ($this->uri->segment(2) == "sig_details") { ?>
 	<script>
-
-		$('.contesttable').DataTable({
+		$('.tablesig').DataTable({
 			"pageLength": 25,
 			responsive: false,
 			ordering: false,
@@ -2099,99 +2002,11 @@ function deleteQsl(id) {
 			$(".buttons-csv").css("color", "white");
 		}
 
-		function createContestDialog() {
-			var baseURL= "<?php echo base_url();?>";
-			$.ajax({
-				url: baseURL + 'index.php/contesting/create',
-				type: 'post',
-				success: function(html) {
-					BootstrapDialog.show({
-						title: 'Add Contest',
-						size: BootstrapDialog.SIZE_WIDE,
-						cssClass: 'create-contest-dialog',
-						nl2br: false,
-						message: html,
-						buttons: [{
-							label: 'Close',
-							action: function (dialogItself) {
-								dialogItself.close();
-							}
-						}]
-					});
-				}
-			});
-		}
-
-		function createContest(form) {
-			var baseURL= "<?php echo base_url();?>";
-			if (form.contestname.value != '') {
-				$.ajax({
-					url: baseURL + 'index.php/contesting/create',
-					type: 'post',
-					data: {'name': form.contestname.value,
-						'adifname': form.adifcontestname.value},
-					success: function(html) {
-						location.reload();
-					}
-				});
-			}
-		}
-
-		function deactivateContest(contestid) {
-			var baseURL= "<?php echo base_url();?>";
-			$.ajax({
-				url: baseURL + 'index.php/contesting/deactivate',
-				type: 'post',
-				data: {'id': contestid },
-				success: function(html) {
-					$(".contest_" + contestid).text('not active');
-					$('.btn_'+contestid).html('Activate');
-					$('.btn_'+contestid).attr('onclick', 'activateContest('+contestid+')')
-				}
-			});
-		}
-
-		function activateContest(contestid) {
-			var baseURL= "<?php echo base_url();?>";
-			$.ajax({
-				url: baseURL + 'index.php/contesting/activate',
-				type: 'post',
-				data: {'id': contestid },
-				success: function(html) {
-					$('.contest_'+contestid).text('active');
-					$('.btn_'+contestid).html('Deactivate');
-					$('.btn_'+contestid).attr('onclick', 'deactivateContest('+contestid+')')
-				}
-			});
-		}
-
-		function deleteContest(id, contest) {
-			BootstrapDialog.confirm({
-				title: 'DANGER',
-				message: 'Warning! Are you sure you want to delete the following contest: ' + contest + '?'  ,
-				type: BootstrapDialog.TYPE_DANGER,
-				closable: true,
-				draggable: true,
-				btnOKClass: 'btn-danger',
-				callback: function(result) {
-					if(result) {
-						var baseURL= "<?php echo base_url();?>";
-						$.ajax({
-							url: baseURL + 'index.php/contesting/delete',
-							type: 'post',
-							data: {'id': id
-							},
-							success: function(data) {
-								$(".contest_" + id).parent("tr:first").remove(); // removes mode from table
-							}
-						});
-					}
-				}
-			});
-		}
-
 	</script>
+<?php } ?>
 
+<?php if ($this->uri->segment(1) == "contesting" && $this->uri->segment(2) == "add") { ?>
+	<script src="<?php echo base_url() ;?>assets/js/sections/contestingnames.js"></script>
 <?php } ?>
   </body>
 </html>

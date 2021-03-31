@@ -380,20 +380,24 @@ class Logbook_model extends CI_Model {
 
     $last_id = $this->db->insert_id();
 
-    $result = $this->exists_qrz_api_key($data['station_id']);
+    // No point in fetching qrz api key and qrzrealtime setting if we're skipping the export
+	if (!$skipexport) {
 
-    // Push qso to qrz if apikey is set, and realtime upload is enabled, and we're not importing an adif-file
-    if (isset($result->qrzapikey) && $result->qrzrealtime == 1 && !$skipexport) {
-      $CI =& get_instance();
-      $CI->load->library('AdifHelper');
-      $qso = $this->get_qso($last_id)->result();
+		$result = $this->exists_qrz_api_key($data['station_id']);
 
-      $adif = $CI->adifhelper->getAdifLine($qso[0]);
-      $result = $this->push_qso_to_qrz($result->qrzapikey, $adif);
-      if ($result['status'] == 'OK') {
-        $this->mark_qrz_qsos_sent($last_id);
-      }
-    }
+		// Push qso to qrz if apikey is set, and realtime upload is enabled, and we're not importing an adif-file
+		if (isset($result->qrzapikey) && $result->qrzrealtime == 1) {
+			$CI =& get_instance();
+			$CI->load->library('AdifHelper');
+			$qso = $this->get_qso($last_id)->result();
+
+			$adif = $CI->adifhelper->getAdifLine($qso[0]);
+			$result = $this->push_qso_to_qrz($result->qrzapikey, $adif);
+			if ($result['status'] == 'OK') {
+				$this->mark_qrz_qsos_sent($last_id);
+			}
+		}
+	}
   }
 
   /*
@@ -2166,7 +2170,73 @@ class Logbook_model extends CI_Model {
 
         print("$count updated\n");
     }
+	
+	public function check_missing_grid_id($all){
+        // get all records with no COL_GRIDSQUARE
+        $this->db->select("COL_PRIMARY_KEY, COL_CALL, COL_TIME_ON, COL_TIME_OFF");
 
+        // check which to update - records with no Gridsquare or all records
+        $this->db->where("COL_GRIDSQUARE is NULL or COL_GRIDSQUARE = ''");
+
+        $where = "(COL_GRIDSQUARE is NULL or COL_GRIDSQUARE = '') AND (COL_VUCC_GRIDS is NULL or COL_VUCC_GRIDS = '')";
+        $this->db->where($where);
+
+        $r = $this->db->get($this->config->item('table_name'));
+
+        $count = 0;
+        $this->db->trans_start();
+        if ($r->num_rows() > 0){
+            foreach($r->result_array() as $row){
+		          $callsign = $row['COL_CALL'];
+              if ($this->config->item('callbook') == "qrz" && $this->config->item('qrz_username') != null && $this->config->item('qrz_password') != null)
+              {
+                  // Lookup using QRZ
+                  $this->load->library('qrz');
+
+                  if(!$this->session->userdata('qrz_session_key')) {
+                      $qrz_session_key = $this->qrz->session($this->config->item('qrz_username'), $this->config->item('qrz_password'));
+                      $this->session->set_userdata('qrz_session_key', $qrz_session_key);
+                  }
+
+                  $callbook = $this->qrz->search($callsign, $this->session->userdata('qrz_session_key'));
+              }
+
+              if ($this->config->item('callbook') == "hamqth" && $this->config->item('hamqth_username') != null && $this->config->item('hamqth_password') != null)
+              {
+                  // Load the HamQTH library
+                  $this->load->library('hamqth');
+
+                  if(!$this->session->userdata('hamqth_session_key')) {
+                      $hamqth_session_key = $this->hamqth->session($this->config->item('hamqth_username'), $this->config->item('hamqth_password'));
+                      $this->session->set_userdata('hamqth_session_key', $hamqth_session_key);
+                  }
+
+                  $callbook = $this->hamqth->search($callsign, $this->session->userdata('hamqth_session_key'));
+
+                  // If HamQTH session has expired, start a new session and retry the search.
+                  if($callbook['error'] == "Session does not exist or expired") {
+                      $hamqth_session_key = $this->hamqth->session($this->config->item('hamqth_username'), $this->config->item('hamqth_password'));
+                      $this->session->set_userdata('hamqth_session_key', $hamqth_session_key);
+                      $callbook = $this->hamqth->search($callsign, $this->session->userdata('hamqth_session_key'));
+                  }
+              }
+              if (isset($callbook))
+              {
+                  $return['callsign_qra'] = $callbook['gridsquare'];
+              }
+              if ($return['callsign_qra'] != ''){
+                  $sql = sprintf("update %s set COL_GRIDSQUARE = '%s' where COL_PRIMARY_KEY=%d",
+                                  $this->config->item('table_name'), $return['callsign_qra'], $row['COL_PRIMARY_KEY']);
+                  $this->db->query($sql);
+                  printf("Updating %s to %s\n<br/>", $row['COL_PRIMARY_KEY'], $return['callsign_qra']);
+                  $count++;
+              }
+            }
+        }
+        $this->db->trans_complete();
+
+        print("$count updated\n");
+    }
 
     public function check_for_station_id() {
       $this->db->where('station_id =', 'NULL');
@@ -2256,7 +2326,7 @@ class Logbook_model extends CI_Model {
 
   function get_lotw_qsos_to_upload($station_id, $start_date, $end_date) {
 
-    $this->db->select('COL_PRIMARY_KEY,COL_CALL, COL_BAND, COL_BAND_RX, COL_TIME_ON, COL_RST_RCVD, COL_RST_SENT, COL_MODE, COL_FREQ, COL_FREQ_RX, COL_GRIDSQUARE, COL_SAT_NAME, COL_PROP_MODE, COL_LOTW_QSL_SENT, station_id');
+    $this->db->select('COL_PRIMARY_KEY,COL_CALL, COL_BAND, COL_BAND_RX, COL_TIME_ON, COL_RST_RCVD, COL_RST_SENT, COL_MODE, COL_SUBMODE, COL_FREQ, COL_FREQ_RX, COL_GRIDSQUARE, COL_SAT_NAME, COL_PROP_MODE, COL_LOTW_QSL_SENT, station_id');
 
     $this->db->where("station_id", $station_id);
     $this->db->where('COL_LOTW_QSL_SENT !=', "Y");
@@ -2305,8 +2375,4 @@ function validateADIFDate($date, $format = 'Ymd')
   $d = DateTime::createFromFormat($format, $date);
   return $d && $d->format($format) == $date;
 }
-
-
-
 ?>
-

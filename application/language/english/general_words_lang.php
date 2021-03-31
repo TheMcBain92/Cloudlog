@@ -2,7 +2,7 @@
 
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-$lang['error_no_active_station_profile'] = 'Attention: you need to set an active station profile.';
+$lang['error_no_active_station_profile'] = 'Attention: you need to set an active station location.';
 
 $lang['notice_turn_the_radio_on'] = 'You have made no QSOs today; time to turn on the radio!';
 
@@ -54,7 +54,7 @@ $lang['general_delete_qso'] = 'Delete QSO';
 $lang['general_total_distance'] = 'Total Distance';
 
 // Cloudlog Terms
-$lang['cloudlog_station_profile'] = 'Station Profile';
+$lang['cloudlog_station_profile'] = 'Station Location';
 
 // ham radio terms
 $lang['gen_hamradio_qso'] = 'QSO';
@@ -90,6 +90,7 @@ $lang['gen_hamradio_usa_state'] = 'USA State';
 $lang['gen_hamradio_county_reference'] = 'USA County';
 $lang['gen_hamradio_iota_reference'] = 'IOTA Reference';
 $lang['gen_hamradio_sota_reference'] = 'SOTA Reference';
+$lang['gen_hamradio_wwff_reference'] = 'WWFF Reference';
 $lang['gen_hamradio_dok'] = 'DOK';
 
 $lang['gen_hamradio_sig'] = 'Sig';

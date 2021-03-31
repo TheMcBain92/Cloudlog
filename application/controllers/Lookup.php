@@ -16,14 +16,42 @@ class Lookup extends CI_Controller {
 		$this->load->model('user_model');
 		if(!$this->user_model->authorize(2)) { $this->session->set_flashdata('notice', 'You\'re not allowed to do that!'); redirect('dashboard'); }
 	}
-	
+
 	public function index()
 	{
+		$data['page_title'] = "Quick Lookup";
+		$this->load->model('logbook_model');
+		$data['dxcc'] = $this->logbook_model->fetchDxcc();
+		$data['iota'] = $this->logbook_model->fetchIota();
+		$this->load->view('lookup/index', $data);
+	}
 
+	public function search() {
+		$CI =& get_instance();
+		$CI->load->model('Stations');
+		$station_id = $CI->Stations->find_active();
+
+		$this->load->model('lookup_model');
+
+		$data['bands'] = $this->lookup_model->get_Worked_Bands($station_id);
+
+		$queryinfo['type'] = xss_clean($this->input->post('type'));
+		$queryinfo['dxcc'] = xss_clean($this->input->post('dxcc'));
+		$queryinfo['was'] = xss_clean($this->input->post('was'));
+		$queryinfo['sota'] = xss_clean($this->input->post('sota'));
+		$queryinfo['grid'] = xss_clean($this->input->post('grid'));
+		$queryinfo['iota'] = xss_clean($this->input->post('iota'));
+		$queryinfo['cqz'] = xss_clean($this->input->post('cqz'));
+		$queryinfo['wwff'] = xss_clean($this->input->post('wwff'));
+		$queryinfo['station_id'] = $station_id;
+		$queryinfo['bands'] = $data['bands'];
+
+		$data['result'] = $this->lookup_model->getSearchResult($queryinfo);
+		$this->load->view('lookup/result', $data);
 	}
 
 	public function scp($call) {
-		
+
 		if($call) {
 			$uppercase_callsign = strtoupper($call);
 		}
@@ -78,7 +106,7 @@ class Lookup extends CI_Controller {
 		{
 			echo " " . $strCall . " ";
 		}
-		
+
 	}
 
 }

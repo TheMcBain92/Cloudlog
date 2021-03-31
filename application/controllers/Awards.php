@@ -2,12 +2,12 @@
 
 /*
 	Handles Displaying of information for awards.
-	
-	These are taken from comments fields or ADIF fields 
+
+	These are taken from comments fields or ADIF fields
 */
 
 class Awards extends CI_Controller {
-	
+
 	function __construct()
 	{
 		parent::__construct();
@@ -24,7 +24,7 @@ class Awards extends CI_Controller {
 		$this->load->view('awards/index');
 		$this->load->view('interface_assets/footer');
 	}
-	
+
 	public function dok ()
 	{
 		//echo "Needs Developed";
@@ -39,7 +39,7 @@ class Awards extends CI_Controller {
 		$this->load->view('interface_assets/footer');
 
 	}
-	
+
     public function dok_details_ajax(){
         $a = $this->input->post();
         $q = "";
@@ -72,7 +72,7 @@ class Awards extends CI_Controller {
         $data['filter'] = str_replace("&#40;and&#41;", ", ", $q);//implode(", ", array_keys($a));
         $this->load->view('awards/details', $data);
     }
-	
+
 	public function dxcc ()	{
 		$this->load->model('dxcc');
         $this->load->model('modes');
@@ -196,65 +196,30 @@ class Awards extends CI_Controller {
     }
 
 	/*
-		Handles Displaying of WAB Squares worked.
-		Comment field - WAB:#
-	*/
-	public function wab() {
-	
-		// Grab all worked WABs
-		$this->load->model('wab');
-		$data['wab_all'] = $this->wab->get_all();
-	
-		// Render Page
-		$data['page_title'] = "Awards - WAB";
-		$this->load->view('interface_assets/header', $data);
-		$this->load->view('awards/wab/index');
-		$this->load->view('interface_assets/footer');
-	}
-	
-	/*
 		Handles showing worked SOTAs
 		Comment field - SOTA:#
 	*/
 	public function sota() {
-	
+
 		// Grab all worked sota stations
 		$this->load->model('sota');
 		$data['sota_all'] = $this->sota->get_all();
-	
+
 		// Render page
 		$data['page_title'] = "Awards - SOTA";
 		$this->load->view('interface_assets/header', $data);
 		$this->load->view('awards/sota/index');
 		$this->load->view('interface_assets/footer');
 	}
-	
-	/*
-		Handles showing worked WACRAL members (wacral.org)
-		Comment field - WACRAL:#
-	*/
-	public function wacral() {
-	
-		// Grab all worked wacral members
-		$this->load->model('wacral');
-		$data['wacral_all'] = $this->wacral->get_all();
-	
-		// Render page
-		$data['page_title'] = "Awards - WACRAL Members";
-		$this->load->view('interface_assets/header', $data);
-		$this->load->view('awards/wacral/index');
-		$this->load->view('interface_assets/footer');
-	}
-	
-	public function cq(){
-        $this->load->model('cq');
-        $zones = array();
-        foreach($this->cq->get_zones() as $row){
-            array_push($zones, intval($row->COL_CQZ));
-        }
-        $data['cqz'] = $zones;
 
-        $data['worked_bands'] = $this->cq->get_worked_bands();
+	public function cq(){
+		$CI =& get_instance();
+		$CI->load->model('Stations');
+		$station_id = $CI->Stations->find_active();
+
+        $this->load->model('cq');
+
+        $data['worked_bands'] = $this->cq->get_worked_bands($station_id);
 
         if ($this->input->post('band') != NULL) {   // Band is not set when page first loads.
             if ($this->input->post('band') == 'All') {         // Did the user specify a band? If not, use all bands
@@ -287,8 +252,8 @@ class Awards extends CI_Controller {
             $postdata['band'] = 'All';
         }
 
-        $data['cq_array'] = $this->cq->get_cq_array($bands, $postdata);
-        $data['cq_summary'] = $this->cq->get_cq_summary($bands);
+        $data['cq_array'] = $this->cq->get_cq_array($bands, $postdata, $station_id);
+        $data['cq_summary'] = $this->cq->get_cq_summary($data['worked_bands'], $station_id);
 
         // Render page
         $data['page_title'] = "Awards - CQ Magazine";
@@ -477,4 +442,54 @@ class Awards extends CI_Controller {
         $data['filter'] = "county " . $state;
         $this->load->view('awards/details', $data);
     }
+
+	/*
+		Handles showing worked Sigs
+		Adif fields: my_sig
+	*/
+	public function sig() {
+		// Grab all worked sig stations
+		$this->load->model('sig');
+
+		$data['sig_types'] = $this->sig->get_all_sig_types();
+
+		// Render page
+		$data['page_title'] = "Awards - SIG";
+		$this->load->view('interface_assets/header', $data);
+		$this->load->view('awards/sig/index');
+		$this->load->view('interface_assets/footer');
+	}
+
+	/*
+	Handles showing worked Sigs
+	*/
+	public function sig_details() {
+
+		// Grab all worked sig stations
+		$this->load->model('sig');
+		$type = str_replace('"', "", $this->input->get("type"));
+		$data['sig_all'] = $this->sig->get_all($type);
+		$data['type'] = $type;
+
+		// Render page
+		$data['page_title'] = "Awards - SIG - " . $type;
+		$this->load->view('interface_assets/header', $data);
+		$this->load->view('awards/sig/qso_list');
+		$this->load->view('interface_assets/footer');
+	}
+
+	/*
+	Handles exporting SIGS to ADIF
+	*/
+	public function sigexportadif() {
+		// Set memory limit to unlimited to allow heavy usage
+		ini_set('memory_limit', '-1');
+
+		$this->load->model('adif_data');
+		//$type = str_replace('"', "", $this->input->get("type"));
+		$type = $this->uri->segment(3);
+		$data['qsos'] = $this->adif_data->sig_all($type);
+
+		$this->load->view('adif/data/exportall', $data);
+	}
 }

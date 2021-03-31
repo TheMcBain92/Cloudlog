@@ -25,7 +25,7 @@ class Station extends CI_Controller {
 		$data['is_there_qsos_with_no_station_id'] = $this->Logbook_model->check_for_station_id();
 
 		// Render Page
-		$data['page_title'] = "Station Profiles";
+		$data['page_title'] = "Station Location";
 		$this->load->view('interface_assets/header', $data);
 		$this->load->view('station_profile/index');
 		$this->load->view('interface_assets/footer');
@@ -46,7 +46,7 @@ class Station extends CI_Controller {
 
 		if ($this->form_validation->run() == FALSE)
 		{
-			$data['page_title'] = "Create Station Profile";
+			$data['page_title'] = "Create Station Location";
 			$this->load->view('interface_assets/header', $data);
 			$this->load->view('station_profile/create');
 			$this->load->view('interface_assets/footer');
@@ -77,7 +77,7 @@ class Station extends CI_Controller {
 		
 		$data['dxcc_list'] = $this->dxcc->list();
 
-		$data['page_title'] = "Edit Station Profile";
+		$data['page_title'] = "Edit Station Location";
 
 		$this->form_validation->set_rules('station_profile_name', 'Station Profile Name', 'required');
 
