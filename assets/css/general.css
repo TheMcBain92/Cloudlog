@@ -225,3 +225,21 @@ color: #ffffff;
 #create_station_profile .row {
     margin-bottom: 10px;
 }
+
+/*
+*   Debug CSS
+*/
+
+    .debug_main .card {
+        margin-bottom: 10px;
+    }
+
+    .was-map-dialog .modal-dialog {
+        width: 100%;
+    }
+
+    @media (min-width: 576px) {
+        .was-map-dialog .modal-dialog {
+            max-width: 73% !important;
+        }
+    }

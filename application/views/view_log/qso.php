@@ -70,12 +70,12 @@
                     <?php if($this->config->item('display_freq') == true) { ?>
                     <tr>
                         <td><?php echo $this->lang->line('gen_hamradio_frequency'); ?></td>
-                        <td><?php echo frequency_display_string($row->COL_FREQ); ?></td>
+                        <td><?php echo $this->frequency->hz_to_mhz($row->COL_FREQ); ?></td>
                     </tr>
                     <?php if($row->COL_FREQ_RX != 0) { ?>
                     <tr>
                         <td><?php echo $this->lang->line('gen_hamradio_frequency_rx'); ?></td>
-                        <td><?php echo frequency_display_string($row->COL_FREQ_RX); ?></td>
+                        <td><?php echo $this->frequency->hz_to_mhz($row->COL_FREQ_RX); ?></td>
                     </tr>
                     <?php }} ?>
 
@@ -101,7 +101,7 @@
                     </tr>
                     <?php } ?>
 
-                    <?php if($row->COL_GRIDSQUARE != null) { ?>
+                    <?php if($row->COL_GRIDSQUARE != null && strlen($row->COL_GRIDSQUARE) >= 4) { ?>
                     <!-- Total Distance Between the Station Profile Gridsquare and Logged Square -->
                     <tr>
                         <td><?php echo $this->lang->line('general_total_distance'); //Total distance ?></td>
@@ -428,18 +428,23 @@
 </div>
 
 <?php
-	if($row->COL_GRIDSQUARE != null) {
-		$stn_loc = $this->qra->qra2latlong(trim($row->COL_GRIDSQUARE));			
-		$lat = $stn_loc[0];
-		$lng = $stn_loc[1];
+	if($row->COL_GRIDSQUARE != null && strlen($row->COL_GRIDSQUARE) >= 4) {
+		$stn_loc = $this->qra->qra2latlong(trim($row->COL_GRIDSQUARE));	
+        if($stn_loc[0] != 0) {
+		    $lat = $stn_loc[0];
+		    $lng = $stn_loc[1];
+        }
 	} else {
 
 		$CI =& get_instance();
 		$CI->load->model('Logbook_model');
 
 		$result = $CI->Logbook_model->dxcc_lookup($row->COL_CALL, $row->COL_TIME_ON);
+
+        if(isset($result)) {
 			$lat = $result['lat'];
 			$lng = $result['long'];
+        }
 	}
 ?>
 
@@ -456,10 +461,3 @@ var callsign = "<?php echo $row->COL_CALL; ?>";
     <div hidden id ='qsoid'><?php echo $row->COL_PRIMARY_KEY; ?></div>
 
 <?php } } ?>
-<?php 
-  // converts a frequency in Hz (e.g. 3650) to 3.650 MHz 
-  function frequency_display_string($frequency)
-  {
-    return number_format (($frequency / 1000 / 1000), 3) . " MHz";
-  }
-?>

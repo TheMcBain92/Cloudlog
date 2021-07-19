@@ -18,6 +18,19 @@
   var icon_dot_url = "<?php echo base_url();?>assets/images/dot.png";
 </script>
 
+
+<script>
+
+function load_was_map() {
+    BootstrapDialog.show({
+            title: 'Worked All States Map ('+$('#band2').val()+')',
+            cssClass: 'was-map-dialog',
+            message: $('<div></div>').load(site_url + '/awards/was_map/' + $('#band2').val())
+    });
+}
+
+</script>
+
 <?php if ($this->uri->segment(1) == "adif") { ?>
     <!-- Javascript used for ADIF Import and Export Areas -->
     <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/moment.min.js"></script>
@@ -254,7 +267,7 @@ function getLookupResult() {
         var q_lng = -32.695312;
         <?php } ?>
 
-        var qso_loc = '<?php echo site_url('map/map_data_custom/');?><?php echo urlencode($date_from); ?>/<?php echo urlencode($date_to); ?>';
+        var qso_loc = '<?php echo site_url('map/map_data_custom/');?><?php echo rawurlencode($date_from); ?>/<?php echo rawurlencode($date_to); ?>/<?php echo rawurlencode($this->input->post('band')); ?>';
         var q_zoom = 2;
 
       $(document).ready(function(){
@@ -814,9 +827,9 @@ $(document).ready(function(){
         $.each( data, function( i, item ) {
           console.log(item.COL_CALL + item.COL_SAT_NAME);
           if(item.COL_SAT_NAME != undefined) {
-            items.push( "<tr><td>" + item.COL_TIME_ON + "</td><td>" + item.COL_CALL + "</td><td>" + item.COL_MODE + "</td><td>" + item.COL_SAT_NAME + "</td><td>" + item.COL_GRIDSQUARE + "</td></tr>" );
+            items.push( "<tr><td>" + item.COL_TIME_ON + "</td><td>" + item.COL_CALL + "</td><td>" + item.COL_MODE + "</td><td>" + item.COL_SAT_NAME + "</td><td>" + item.COL_GRIDSQUARE + item.COL_VUCC_GRIDS + "</td></tr>" );
           } else {
-            items.push( "<tr><td>" + item.COL_TIME_ON + "</td><td>" + item.COL_CALL + "</td><td>" + item.COL_MODE + "</td><td>" + item.COL_BAND + "</td><td>" + item.COL_GRIDSQUARE + "</td></tr>" );
+            items.push( "<tr><td>" + item.COL_TIME_ON + "</td><td>" + item.COL_CALL + "</td><td>" + item.COL_MODE + "</td><td>" + item.COL_BAND + "</td><td>" + item.COL_GRIDSQUARE + item.COL_VUCC_GRIDS + "</td></tr>" );
           }
         });
 
@@ -1291,6 +1304,48 @@ $(document).ready(function(){
                     if (data.message == 'OK') {
                         $("#qso_" + id).find("td:eq(8)").find("span:eq(1)").attr('class', 'qsl-green'); // Paints arrow green
                         $(".qsl_" + id).remove(); // removes choice from menu
+                    }
+                    else {
+                        $(".bootstrap-dialog-message").append('<div class="alert alert-danger"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>You are not allowed to update QSL status!</div>');
+                    }
+                }
+            });
+        }
+
+        // Function: qsl_requested
+        // Marks QSL card requested against the QSO.
+        function qsl_requested(id, method) {
+            var baseURL= "<?php echo base_url();?>";
+            $.ajax({
+                url: baseURL + 'index.php/qso/qsl_requested_ajax',
+                type: 'post',
+                data: {'id': id,
+                    'method': method
+                },
+                success: function(data) {
+                    if (data.message == 'OK') {
+                        $("#qso_" + id).find("td:eq(8)").find("span:eq(0)").attr('class', 'qsl-yellow'); // Paints arrow green
+                    }
+                    else {
+                        $(".bootstrap-dialog-message").append('<div class="alert alert-danger"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>You are not allowed to update QSL status!</div>');
+                    }
+                }
+            });
+        }
+
+        // Function: qsl_ignore
+        // Marks QSL card ignore against the QSO.
+        function qsl_ignore(id, method) {
+            var baseURL= "<?php echo base_url();?>";
+            $.ajax({
+                url: baseURL + 'index.php/qso/qsl_ignore_ajax',
+                type: 'post',
+                data: {'id': id,
+                    'method': method
+                },
+                success: function(data) {
+                    if (data.message == 'OK') {
+                        $("#qso_" + id).find("td:eq(8)").find("span:eq(0)").attr('class', 'qsl-red'); // Paints arrow green
                     }
                     else {
                         $(".bootstrap-dialog-message").append('<div class="alert alert-danger"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>You are not allowed to update QSL status!</div>');
@@ -1854,16 +1909,17 @@ function deleteQsl(id) {
                                 '<td>'+ receivedexchange + '</td>' +
                                 '</tr>');
                         });
-
-                        $('.qsotable').DataTable({
-                            "pageLength": 25,
-                            responsive: false,
-                            "scrollY":        "400px",
-                            "scrollCollapse": true,
-                            "paging":         false,
-                            "scrollX": true,
-                            "order": [[ 0, "desc" ]]
-                        });
+                        if (!$.fn.DataTable.isDataTable('.qsotable')) {
+                            $('.qsotable').DataTable({
+                                "pageLength": 25,
+                                responsive: false,
+                                "scrollY":        "400px",
+                                "scrollCollapse": true,
+                                "paging":         false,
+                                "scrollX": true,
+                                "order": [[ 0, "desc" ]]
+                            });
+                        }
                     }
                 });
             }

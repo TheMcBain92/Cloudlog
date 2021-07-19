@@ -143,7 +143,7 @@
          ]
       }
    },
-   "CAS-6":{
+   "TO-108":{
       "Modes":{
          "U/V":[
             {
@@ -235,6 +235,18 @@
                "Uplink_Freq":"145880000",
                "Downlink_Mode":"FM",
                "Downlink_Freq":"435880000"
+            }
+         ]
+      }
+   },
+   "JO-97":{
+      "Modes":{
+         "U/V":[
+            {
+               "Uplink_Mode":"LSB",
+               "Uplink_Freq":"435110000",
+               "Downlink_Mode":"USB",
+               "Downlink_Freq":"145865000"
             }
          ]
       }
