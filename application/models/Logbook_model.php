@@ -24,15 +24,15 @@ class Logbook_model extends CI_Model {
 
     // Contest exchange, need to separate between serial and other type of exchange
     if($this->input->post('exchangetype')) {
-		$srx_string = $this->input->post('exch_recv');
-		$stx_string = $this->input->post('exch_sent');
-		$srx = $this->input->post('exch_serial_r');
-		$stx = $this->input->post('exch_serial_s');
+      $srx_string = $this->input->post('exch_recv') == '' ? null : $this->input->post('exch_recv');
+      $stx_string = $this->input->post('exch_sent') == '' ? null : $this->input->post('exch_sent');
+      $srx = $this->input->post('exch_serial_r') == '' ? null : $this->input->post('exch_serial_r');
+      $stx = $this->input->post('exch_serial_s') == '' ? null : $this->input->post('exch_serial_s');
     } else {
-        $srx_string = null;
-        $stx_string = null;
-        $srx = null;
-        $stx = null;
+      $srx_string = null;
+      $stx_string = null;
+      $srx = null;
+      $stx = null;
     }
 
     if($this->input->post('contestname')) {
@@ -98,6 +98,12 @@ class Logbook_model extends CI_Model {
       $clean_county_input = null;
     }
 
+    if($this->input->post('copyexchangetodok')) {
+      $dark_dok = $this->input->post('exch_recv');
+    } else {
+      $dark_dok = $this->input->post('darc_dok');
+    }
+
     // Create array with QSO Data
     $data = array(
             'COL_TIME_ON' => $datetime,
@@ -154,7 +160,7 @@ class Logbook_model extends CI_Model {
             'COL_SOTA_REF' => trim($this->input->post('sota_ref')),
             'COL_SIG' => trim($this->input->post('sig')),
             'COL_SIG_INFO' => trim($this->input->post('sig_info')),
-            'COL_DARC_DOK' => trim($this->input->post('darc_dok')),
+            'COL_DARC_DOK' => trim($dark_dok),
 			'COL_NOTES' => $this->input->post('notes'),
     );
 
@@ -1506,7 +1512,7 @@ class Logbook_model extends CI_Model {
       $query = $this->db->get($this->config->item('table_name'));
       $row = $query->row();
 
-      if (isset($row->COL_EQSL_QSLDATE)){
+      if (isset($row->COL_EQSL_QSLRDATE)){
           return $row->COL_EQSL_QSLRDATE;
         }else{
             // No previous date (first time import has run?), so choose UNIX EPOCH!
@@ -1594,7 +1600,7 @@ class Logbook_model extends CI_Model {
                   $entity = $this->get_entity($record['dxcc']);
                   $dxcc = array($record['dxcc'], $entity['name']);
               } else {
-                  $dxcc = NULL;
+                  $dxcc = $this->check_dxcc_table($record['call'], $time_off);
               }
           } else {
             $dxcc = $this->check_dxcc_table($record['call'], $time_off);
@@ -1607,7 +1613,9 @@ class Logbook_model extends CI_Model {
         if(isset($record['country'])) {
             $country = $record['country'];
         } else {
-            $country = ucwords(strtolower($dxcc[1]));
+            if (isset($dxcc[1])) {
+                $country = ucwords(strtolower($dxcc[1]));
+            }
         }
 
         // RST recevied
@@ -2337,6 +2345,54 @@ class Logbook_model extends CI_Model {
       }
     }
 
+    public function loadCallBook($callsign, $use_fullname=false)
+    {
+        $callbook = null;
+        try {
+            if ($this->config->item('callbook') == "qrz" && $this->config->item('qrz_username') != null && $this->config->item('qrz_password') != null) {
+                // Lookup using QRZ
+                $this->load->library('qrz');
+
+                if (!$this->session->userdata('qrz_session_key')) {
+                    $qrz_session_key = $this->qrz->session($this->config->item('qrz_username'), $this->config->item('qrz_password'));
+                    $this->session->set_userdata('qrz_session_key', $qrz_session_key);
+                }
+
+
+
+                $callbook = $this->qrz->search($callsign, $this->session->userdata('qrz_session_key'), $use_fullname);
+
+                // if we got nothing, it's probably because our session key is invalid, try again
+                if (!isset($callbook['callsign']))
+                {
+                    $qrz_session_key = $this->qrz->session($this->config->item('qrz_username'), $this->config->item('qrz_password'));
+                    $this->session->set_userdata('qrz_session_key', $qrz_session_key);
+                    $callbook = $this->qrz->search($callsign, $this->session->userdata('qrz_session_key'), $use_fullname);
+                }
+            }
+
+            if ($this->config->item('callbook') == "hamqth" && $this->config->item('hamqth_username') != null && $this->config->item('hamqth_password') != null) {
+                // Load the HamQTH library
+                $this->load->library('hamqth');
+
+                if (!$this->session->userdata('hamqth_session_key')) {
+                    $hamqth_session_key = $this->hamqth->session($this->config->item('hamqth_username'), $this->config->item('hamqth_password'));
+                    $this->session->set_userdata('hamqth_session_key', $hamqth_session_key);
+                }
+
+                $callbook = $this->hamqth->search($callsign, $this->session->userdata('hamqth_session_key'));
+
+                // If HamQTH session has expired, start a new session and retry the search.
+                if ($callbook['error'] == "Session does not exist or expired") {
+                    $hamqth_session_key = $this->hamqth->session($this->config->item('hamqth_username'), $this->config->item('hamqth_password'));
+                    $this->session->set_userdata('hamqth_session_key', $hamqth_session_key);
+                    $callbook = $this->hamqth->search($callsign, $this->session->userdata('hamqth_session_key'));
+                }
+            }
+        } finally {
+            return $callbook;
+        }
+    }
 
     public function update_all_station_ids() {
 
@@ -2464,4 +2520,6 @@ function validateADIFDate($date, $format = 'Ymd')
   $d = DateTime::createFromFormat($format, $date);
   return $d && $d->format($format) == $date;
 }
+
+
 ?>

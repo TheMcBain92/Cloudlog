@@ -52,87 +52,336 @@ function load_was_map() {
 
 <?php if ($this->uri->segment(1) == "search" && $this->uri->segment(2) == "filter") { ?>
 
-<script type="text/javascript" src="<?php echo base_url() ;?>assets/js/query-builder.standalone.min.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/query-builder.standalone.min.js"></script>
 
 <script type="text/javascript">
-
-$(".search-results-box").hide();
+    $(".search-results-box").hide();
 
     $('#builder').queryBuilder({
-    filters: [
-      <?php foreach ($get_table_names->result() as $row) {
-        $value_name = str_replace("COL_", "", $row->Field);
-        if ($value_name != "PRIMARY_KEY" && strpos($value_name, 'MY_') === false && strpos($value_name, '_INTL') == false) { ?>
-        {
-          id: '<?php echo $row->Field; ?>',
-          label: '<?php echo $value_name; ?>',
-          <?php if (strpos($row->Type, 'int(') !== false) { ?>
-          type: 'integer',
-          operators: ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal']
-          <?php } elseif(strpos($row->Type, 'double') !== false) { ?>
-          type: 'double',
-          operators: ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal']
-          <?php } elseif(strpos($row->Type, 'datetime') !== false) { ?>
-          type: 'datetime',
-          operators: ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal']
-          <?php } else { ?>
-          type: 'string',
-          operators: ['equal', 'not_equal', 'begins_with', 'contains', 'ends_with', 'is_empty', 'is_not_empty', 'is_null', 'is_not_null']
-          <?php } ?>
-        },
-        <?php } ?>
-      <?php } ?>
-    ]
-  });
+        filters: [
+            <?php foreach ($get_table_names->result() as $row) {
+                $value_name = str_replace("COL_", "", $row->Field);
+                if ($value_name != "PRIMARY_KEY" && strpos($value_name, 'MY_') === false && strpos($value_name, '_INTL') == false) { ?> {
+                        id: '<?php echo $row->Field; ?>',
+                        label: '<?php echo $value_name; ?>',
+                        <?php if (strpos($row->Type, 'int(') !== false) { ?>
+                            type: 'integer',
+                            operators: ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal']
+                        <?php } elseif (strpos($row->Type, 'double') !== false) { ?>
+                            type: 'double',
+                            operators: ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal']
+                        <?php } elseif (strpos($row->Type, 'datetime') !== false) { ?>
+                            type: 'datetime',
+                            operators: ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal']
+                        <?php } else { ?>
+                            type: 'string',
+                            operators: ['equal', 'not_equal', 'begins_with', 'contains', 'ends_with', 'is_empty', 'is_not_empty', 'is_null', 'is_not_null']
+                        <?php } ?>
+                    },
+                <?php } ?>
+            <?php } ?>
+        ]
+    });
 
-  $('#btn-get').on('click', function() {
-    var result = $('#builder').queryBuilder('getRules');
-    if (!$.isEmptyObject(result)) {
-      //alert(JSON.stringify(result, null, 2));
 
-      $.post( "<?php echo site_url('search/json_result');?>", { search: JSON.stringify(result, null, 2), temp: "testvar" })
-      .done(function( data ) {
-        //console.log(data)
-        //alert( "Data Loaded: " + data );
-        $('.qso').remove();
-        $(".search-results-box").show();
+    function export_search_result() {
+        var result = $('#builder').queryBuilder('getRules');
+        if (!$.isEmptyObject(result)) {
+            xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                var a;
+                if (xhttp.readyState === 4 && xhttp.status === 200) {
+                    // Trick for making downloadable link
+                    a = document.createElement('a');
+                    a.href = window.URL.createObjectURL(xhttp.response);
+                    // Give filename you wish to download
+                    a.download = "advanced_search_export.adi";
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                }
+            };
+            // Post data to URL which handles post request
+            xhttp.open("POST", "<?php echo site_url('search/export_to_adif'); ?>", true);
+            xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            // You should set responseType as blob for binary responses
+            xhttp.responseType = 'blob';
+            xhttp.send("search=" + JSON.stringify(result, null, 2));
+        }
+    }
 
-        $.each(JSON.parse(data), function(i, item) {
+    function export_stored_query(id) {
+        xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            var a;
+            if (xhttp.readyState === 4 && xhttp.status === 200) {
+                // Trick for making downloadable link
+                a = document.createElement('a');
+                a.href = window.URL.createObjectURL(xhttp.response);
+                // Give filename you wish to download
+                a.download = "advanced_search_export.adi";
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+            }
+        };
+        // Post data to URL which handles post request
+        xhttp.open("POST", "<?php echo site_url('search/export_stored_query_to_adif'); ?>", true);
+        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        // You should set responseType as blob for binary responses
+        xhttp.responseType = 'blob';
+        xhttp.send("id=" + id);
+    }
 
-          var band = "";
-          if(item.COL_SAT_NAME != "") {
-            band = item.COL_SAT_NAME;
-          } else {
-            band = item.COL_BAND;
-          }
-          var callsign = '<a href="javascript:displayQso(' + item.COL_PRIMARY_KEY + ');" >' + item.COL_CALL + '</a>';
-          if (item.COL_SUBMODE == '' || item.COL_SUBMODE == null) {
-            $('#results').append('<tr class="qso"><td>' + item.COL_TIME_ON + '</td><td>' + callsign + '</td><td>' + item.COL_MODE + '</td><td>' + item.COL_RST_SENT + '</td><td>' + item.COL_RST_RCVD + '</td><td>' + band + '</td><td>' + item.COL_COUNTRY + '</td><td></td></tr>');
-          }
-          else {
-            $('#results').append('<tr class="qso"><td>' + item.COL_TIME_ON + '</td><td>' + callsign + '</td><td>' + item.COL_SUBMODE + '</td><td>' + item.COL_RST_SENT + '</td><td>' + item.COL_RST_RCVD + '</td><td>' + band + '</td><td>' + item.COL_COUNTRY + '</td><td></td></tr>');
-          }
+    $('#btn-save').on('click', function() {
+        var resultquery = $('#builder').queryBuilder('getRules');
+        if (!$.isEmptyObject(resultquery)) {
+            let message = 'Description: <input class="form-control input-group-sm getqueryname">'
+
+            BootstrapDialog.confirm({
+                title: 'Query description',
+                size: BootstrapDialog.SIZE_NORMAL,
+                cssClass: 'description-dialog',
+                closable: true,
+                nl2br: false,
+                message: message,
+                btnCancelLabel: 'Cancel',
+                btnOKLabel: 'Save',
+                callback: function(result) {
+                    if (result) {
+                        $.post("<?php echo site_url('search/save_query'); ?>", {
+                                search: JSON.stringify(resultquery, null, 2),
+                                description: $(".getqueryname").val()
+                            })
+                            .done(function(data) {
+                                $(".alert").remove();
+                                $(".card-body.main").append('<div class="alert alert-success"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>Your query has been saved!</div>');
+                                if ($("#querydropdown option").length == 0) {
+                                    var dropdowninfo = ' <button class="btn btn-sm btn-primary" onclick="edit_stored_query_dialog()" id="btn-edit">Edit queries</button></p>' +
+                                    '<div class="form-group row querydropdownform">' +
+                                        '<label class="col-md-2 control-label" for="querydropdown">  Stored queries:</label>' +
+                                        '<div class="col-md-3">' +
+                                            '<select id="querydropdown" name="querydropdown" class="form-control custom-select-sm">' +
+                                            '</select>' +
+                                        '</div>' +
+                                        '<button class="btn btn-sm btn-primary ld-ext-right runbutton" onclick="run_query()">Run Query<div class="ld ld-ring ld-spin"></div></button>' +
+                                    '</div>';
+                                    $("#btn-save").after(dropdowninfo);
+                                }
+                                $('#querydropdown').append(new Option(data.description, data.id)); // We add the saved query to the dropdown
+                            });
+                    }
+                },
+            });
+
+        } else {
+            BootstrapDialog.show({
+                title: 'Stored Queries',
+                type: BootstrapDialog.TYPE_WARNING,
+                size: BootstrapDialog.SIZE_NORMAL,
+                cssClass: 'queries-dialog',
+                nl2br: false,
+                message: 'You need to make a query before you search!',
+                buttons: [{
+                    label: 'Close',
+                    action: function(dialogItself) {
+                        dialogItself.close();
+                    }
+                }]
+            });
+        }
+    });
+
+    function run_query() {
+        $(".alert").remove();
+        $(".runbutton").addClass('running');
+        $(".runbutton").prop('disabled', true);
+        let id = $('#querydropdown').val();
+        $.post("<?php echo site_url('search/run_query'); ?>", {
+                id: id
+            })
+            .done(function(data) {
+
+                $('.exportbutton').html('<button class="btn btn-sm btn-primary" onclick="export_stored_query(' + id + ')">Export to ADIF</button>');
+                $('.card-body.result').empty();
+                $(".search-results-box").show();
+
+                $('.card-body.result').append(data);
+                $('.table').DataTable({
+                    "pageLength": 25,
+                    responsive: false,
+                    ordering: false,
+                    "scrollY": "400px",
+                    "scrollCollapse": true,
+                    "paging": false,
+                    "scrollX": true,
+                    dom: 'Bfrtip',
+                    buttons: [
+                        'csv'
+                    ]
+                });
+                // change color of csv-button if dark mode is chosen
+                if (isDarkModeTheme()) {
+                    $(".buttons-csv").css("color", "white");
+                }
+                $(".runbutton").removeClass('running');
+                $(".runbutton").prop('disabled', false);
+            });
+    }
+
+    function delete_stored_query(id) {
+        BootstrapDialog.confirm({
+            title: 'DANGER',
+            message: 'Warning! Are you sure you want delete this stored query?',
+            type: BootstrapDialog.TYPE_DANGER,
+            closable: true,
+            draggable: true,
+            btnOKClass: 'btn-danger',
+            callback: function(result) {
+                if (result) {
+                    $.ajax({
+                        url: base_url + 'index.php/search/delete_query',
+                        type: 'post',
+                        data: {
+                            'id': id
+                        },
+                        success: function(data) {
+                            $(".bootstrap-dialog-message").prepend('<div class="alert alert-danger"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>The stored query has been deleted!</div>');
+                            $("#query_" + id).remove(); // removes query from table in dialog
+                            $("#querydropdown option[value='" + id + "']").remove(); // removes query from dropdown
+                            if ($("#querydropdown option").length == 0) { 
+                                $("#btn-edit").remove();
+                                $('.querydropdownform').remove();
+                            };
+                        },
+                        error: function() {
+                            $(".bootstrap-dialog-message").prepend('<div class="alert alert-danger"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>The stored query could not be deleted. Please try again!</div>');
+                        },
+                    });
+                }
+            }
         });
-
-      });
     }
-    else{
-      //console.log("invalid object :");
-    }
-  });
 
-  $('#btn-set').on('click', function() {
-    //$('#builder').queryBuilder('setRules', rules_basic);
-    var result = $('#builder').queryBuilder('getRules');
-    if (!$.isEmptyObject(result)) {
-      rules_basic = result;
+    function edit_stored_query(id) {
+        $('#description_' + id).attr('contenteditable', 'true');
+        $('#description_' + id).focus();
+        $('#edit_' + id).html('<a class="btn btn-primary btn-sm" href="javascript:save_edited_query(' + id + ');">Save</a>'); // Change to save button
     }
-  });
 
-  //When rules changed :
-  $('#builder').on('getRules.queryBuilder.filter', function(e) {
-    //$log.info(e.value);
-  });
+    function save_edited_query(id) {
+        $('#description_' + id).attr('contenteditable', 'false');
+        $('#edit_' + id).html('<a class="btn btn-outline-primary btn-sm" href="javascript:edit_stored_query(' + id + ');">Edit</a>');
+        $.ajax({
+            url: base_url + 'index.php/search/save_edited_query',
+            type: 'post',
+            data: {
+                id: id,
+                description: $('#description_' + id).html(),
+            },
+            success: function(html) {
+                $('#edit_' + id).html('<a class="btn btn-outline-primary btn-sm" href="javascript:edit_stored_query(' + id + ');">Edit</a>'); // Change to edit button
+                $(".bootstrap-dialog-message").prepend('<div class="alert alert-success"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>The query description has been updated!</div>');
+                $("#querydropdown option[value='" + id + "']").text($('#description_' + id).html()); // Change text in dropdown
+            },
+            error: function() {
+                $(".bootstrap-dialog-message").prepend('<div class="alert alert-danger"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>Something went wrong with the save. Please try again!</div>');
+            },
+        });
+    }
+
+    function edit_stored_query_dialog() {
+        $(".alert").remove();
+        $.ajax({
+            url: base_url + 'index.php/search/get_stored_queries',
+            type: 'post',
+            success: function(html) {
+                BootstrapDialog.show({
+                    title: 'Stored Queries',
+                    size: BootstrapDialog.SIZE_WIDE,
+                    cssClass: 'queries-dialog',
+                    nl2br: false,
+                    message: html,
+                    buttons: [{
+                        label: 'Close',
+                        action: function(dialogItself) {
+                            dialogItself.close();
+                        }
+                    }]
+                });
+            }
+        });
+    }
+
+    $('#btn-get').on('click', function() {
+        $(".alert").remove();
+        var result = $('#builder').queryBuilder('getRules');
+        if (!$.isEmptyObject(result)) {
+            $(".searchbutton").addClass('running');
+            $(".searchbutton").prop('disabled', true);
+
+            $.post("<?php echo site_url('search/search_result'); ?>", {
+                    search: JSON.stringify(result, null, 2),
+                    temp: "testvar"
+                })
+                .done(function(data) {
+                    $('.exportbutton').html('<button class="btn btn-sm btn-primary" onclick="export_search_result();">Export to ADIF</button>');
+
+                    $('.card-body.result').empty();
+                    $(".search-results-box").show();
+
+                    $('.card-body.result').append(data);
+                    $('.table').DataTable({
+                        "pageLength": 25,
+                        responsive: false,
+                        ordering: false,
+                        "scrollY": "400px",
+                        "scrollCollapse": true,
+                        "paging": false,
+                        "scrollX": true,
+                        dom: 'Bfrtip',
+                        buttons: [
+                            'csv'
+                        ]
+                    });
+                    // change color of csv-button if dark mode is chosen
+                    if (isDarkModeTheme()) {
+                        $(".buttons-csv").css("color", "white");
+                    }
+                    $(".searchbutton").removeClass('running');
+                    $(".searchbutton").prop('disabled', false);
+                    $("#btn-save").show();
+                });
+        } else {
+            BootstrapDialog.show({
+                title: 'Stored Queries',
+                type: BootstrapDialog.TYPE_WARNING,
+                size: BootstrapDialog.SIZE_NORMAL,
+                cssClass: 'queries-dialog',
+                nl2br: false,
+                message: 'You need to make a query before you search!',
+                buttons: [{
+                    label: 'Close',
+                    action: function(dialogItself) {
+                        dialogItself.close();
+                    }
+                }]
+            });
+        }
+    });
+
+    $('#btn-set').on('click', function() {
+        //$('#builder').queryBuilder('setRules', rules_basic);
+        var result = $('#builder').queryBuilder('getRules');
+        if (!$.isEmptyObject(result)) {
+            rules_basic = result;
+        }
+    });
+
+    //When rules changed :
+    $('#builder').on('getRules.queryBuilder.filter', function(e) {
+        //$log.info(e.value);
+    });
 </script>
 <?php } ?>
 
@@ -370,14 +619,15 @@ i=0;
 function searchButtonPress(){
     event.preventDefault()
     if ($('#callsign').val()) {
-      $('#partial_view').load("logbook/search_result/" + $('#callsign').val(), function() {});
+      let fixedcall = $('#callsign').val();
+      $('#partial_view').load("logbook/search_result/" + fixedcall.replace('Ø', '0'), function() {});
     }
 }
 
 $(document).ready(function(){
 
   <?php if($this->input->post('callsign') != "") { ?>
-    $('#partial_view').load("logbook/search_result/<?php echo $this->input->post('callsign'); ?>", function() {
+        $('#partial_view').load("logbook/search_result/<?php echo str_replace("Ø","0",$this->input->post('callsign')); ?>", function() {
     });
   <?php } ?>
 
@@ -385,9 +635,9 @@ $(document).on('keypress',function(e) {
   if(e.which == 13) {
 
     if ($('#callsign').val()) {
-      $('#partial_view').load("logbook/search_result/" + $('#callsign').val(), function() {});
+        let fixedcall = $('#callsign').val();
+      $('#partial_view').load("logbook/search_result/" + fixedcall.replace('Ø', '0'), function() {});
     }
-
 
      event.preventDefault();
         return false;
@@ -620,7 +870,7 @@ $(document).on('keypress',function(e) {
   </script>
 
 <?php } ?>
-<?php if ( ($this->uri->segment(1) == "qso" && $_GET['manual'] == 0) || $this->uri->segment(1) == "contesting") { ?>
+<?php if ( ($this->uri->segment(1) == "qso" && $_GET['manual'] == 0) || ($this->uri->segment(1) == "contesting" && $this->uri->segment(2) != "add")) { ?>
     <script>
     function setRst(mode) {
         if(mode == 'JT65' || mode == 'JT65B' || mode == 'JT6C' || mode == 'JTMS' || mode == 'ISCAT' || mode == 'MSK144' || mode == 'JTMSK' || mode == 'QRA64' || mode == 'FT8' || mode == 'FT4' || mode == 'JS8' || mode == 'JT9' || mode == 'JT9-1' || mode == 'ROS'){
@@ -638,8 +888,7 @@ $(document).on('keypress',function(e) {
         }
     }
     </script>
-<?php } ?>
-<?php if ( ($this->uri->segment(1) == "qso" && $_GET['manual'] == 0) || $this->uri->segment(1) == "contesting") { ?>
+
     <script>
         // Javascript for controlling rig frequency.
   var updateFromCAT = function() {
@@ -1204,7 +1453,7 @@ $(document).ready(function(){
                 },
                 success: function(data) {
                     if (data.message == 'OK') {
-                        $("#qso_" + id).find("td:eq(8)").find("span:eq(0)").attr('class', 'qsl-red'); // Paints arrow green
+                        $("#qso_" + id).find("td:eq(8)").find("span:eq(0)").attr('class', 'qsl-grey'); // Paints arrow grey
                     }
                     else {
                         $(".bootstrap-dialog-message").append('<div class="alert alert-danger"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>You are not allowed to update QSL status!</div>');
@@ -1742,7 +1991,7 @@ function deleteQsl(id) {
 		});
 	}
 </script>
-<?php if ($this->uri->segment(1) == "contesting") { ?>
+<?php if ($this->uri->segment(1) == "contesting" && $this->uri->segment(2) != "add" ) { ?>
     <script src="<?php echo base_url() ;?>assets/js/sections/contesting.js"></script>
 <?php } ?>
 
