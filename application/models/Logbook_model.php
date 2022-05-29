@@ -1645,9 +1645,19 @@ class Logbook_model extends CI_Model {
         $time_on = date('Y-m-d', strtotime($record['qso_date'])) ." ".date('H:i:s', strtotime($record['time_on']));
 
         if (isset($record['time_off'])) {
-            $time_off = date('Y-m-d', strtotime($record['qso_date'])) ." ".date('H:i:s', strtotime($record['time_off']));
+            if (isset($record['date_off'])) {
+                // date_off and time_off set
+                $time_off = date('Y-m-d', strtotime($record['date_off'])) . ' ' . date('H:i:s', strtotime($record['time_off']));
+            } elseif (strtotime($record['time_off']) < strtotime($record['time_on'])) {
+                // date_off is not set, QSO ends next day
+                $time_off = date('Y-m-d', strtotime($record['qso_date'] . ' + 1 day')) . ' ' . date('H:i:s', strtotime($record['time_off']));
+            } else {
+                // date_off is not set, QSO ends same day
+                $time_off = date('Y-m-d', strtotime($record['qso_date'])) . ' ' . date('H:i:s', strtotime($record['time_off']));
+            }
         } else {
-          $time_off = $time_on;
+            // date_off and time_off not set, QSO end == QSO start
+            $time_off = $time_on;
         }
 
         // Store Freq
@@ -1770,6 +1780,19 @@ class Logbook_model extends CI_Model {
         }else{
             $tx_pwr = NULL;
         }
+
+        // Sanitise RX Power
+        if (isset($record['rx_pwr'])){
+          // Check if RX_PWR is "K" which N1MM+ uses to indicate 1000W
+          if($record['rx_pwr'] == "K") {
+            $rx_pwr = 1000;
+          } else {
+            $rx_pwr = filter_var($record['rx_pwr'],FILTER_VALIDATE_FLOAT);
+          }
+        }else{
+          $rx_pwr = NULL;
+         }
+
 
         if (isset($record['a_index'])){
             $input_a_index = filter_var($record['a_index'],FILTER_SANITIZE_NUMBER_INT);
@@ -2086,7 +2109,7 @@ class Logbook_model extends CI_Model {
                 'COL_RIG_INTL' => (!empty($record['rig_intl'])) ? $record['rig_intl'] : '',
                 'COL_RST_RCVD' => $rst_rx,
                 'COL_RST_SENT' => $rst_tx,
-                'COL_RX_PWR' => (!empty($record['rx_pwr'])) ? $record['rx_pwr'] : null,
+                'COL_RX_PWR' => $rx_pwr,
                 'COL_SAT_MODE' => (!empty($record['sat_mode'])) ? $record['sat_mode'] : '',
                 'COL_SAT_NAME' => (!empty($record['sat_name'])) ? $record['sat_name'] : '',
                 'COL_SFI' => (!empty($record['sfi'])) ? $record['sfi'] : null,
