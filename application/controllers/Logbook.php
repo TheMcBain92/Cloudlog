@@ -362,18 +362,21 @@ class Logbook extends CI_Controller {
 				$count++;
 
 			} else {
-				if($count != 1) {
-					echo ",";
-				}
+				$query = $this->db->query('
+					SELECT *
+					FROM dxcc_entities
+					WHERE prefix = SUBSTRING( \''.$row->COL_CALL.'\', 1, LENGTH( prefix ) )
+					ORDER BY LENGTH( prefix ) DESC
+					LIMIT 1
+				');
 
-				$result = $this->logbook_model->dxcc_lookup($row->COL_CALL, $row->COL_TIME_ON);
-		
-				if(isset($result)) {
-					$lat = $result['lat'];
-					$lng = $result['long'];
+				foreach ($query->result() as $dxcc) {
+					if($count != 1) {
+					echo ",";
+						}
+					echo "{\"lat\":\"".$dxcc->lat."\",\"lng\":\"".$dxcc->long."\", \"html\":\"Callsign: ".$row->COL_CALL."<br />Date/Time: ".$row->COL_TIME_ON."<br />Band: ".$row->COL_BAND."<br />Mode: ".$row->COL_MODE."\",\"label\":\"".$row->COL_CALL."\"}";
+					$count++;
 				}
-				echo "{\"lat\":\"".$lat."\",\"lng\":\"".$lng."\", \"html\":\"Callsign: ".$row->COL_CALL."<br />Date/Time: ".$row->COL_TIME_ON."<br />Band: ".$row->COL_BAND."<br />Mode: ".$row->COL_MODE."\",\"label\":\"".$row->COL_CALL."\"}";
-				$count++;
 			}
 
 		}
