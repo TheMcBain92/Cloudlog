@@ -23,4 +23,4 @@ sync.sh
 .env
 /node_modules
 /.vs
-*.dwsync.xml
+*dwsync.xml
