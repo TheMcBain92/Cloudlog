@@ -26,6 +26,7 @@ $lang['general_word_filtering_on'] = "Отфильтровано по";
 $lang['general_word_not_display'] = "Не отображать";
 $lang['general_word_icon'] = "Иконка";
 $lang['general_word_never'] = "Никогда";
+$lang['general_word_undefined'] = "Undefined";
 
 $lang['general_word_date'] = 'Дата';
 $lang['general_word_startdate'] = "Дата начала";
@@ -153,6 +154,24 @@ $lang['gen_hamradio_qslmsg'] = 'сообщение QSL ';
 $lang['gen_hamradio_locator'] = 'Локатор';
 $lang['gen_hamradio_transmit_power'] = 'Мощность передачи (Вт)';
 $lang['gen_hamradio_propagation_mode'] = 'Тип прохождения';
+$lang['gen_hamradio_propagation_AS'] = "Aircraft Scatter";
+$lang['gen_hamradio_propagation_AUR'] = "Aurora";
+$lang['gen_hamradio_propagation_AUE'] = "Aurora-E";
+$lang['gen_hamradio_propagation_BS'] = "Back scatter";
+$lang['gen_hamradio_propagation_ECH'] = "EchoLink";
+$lang['gen_hamradio_propagation_EME'] = "Earth-Moon-Earth";
+$lang['gen_hamradio_propagation_ES'] = "Sporadic E";
+$lang['gen_hamradio_propagation_FAI'] = "Field Aligned Irregularities";
+$lang['gen_hamradio_propagation_F2'] = "F2 Reflection";
+$lang['gen_hamradio_propagation_INTERNET'] = "Internet-assisted";
+$lang['gen_hamradio_propagation_ION'] = "Ionoscatter";
+$lang['gen_hamradio_propagation_IRL'] = "IRLP";
+$lang['gen_hamradio_propagation_MS'] = "Meteor scatter";
+$lang['gen_hamradio_propagation_RPT'] = "Terrestrial or atmospheric repeater or transponder";
+$lang['gen_hamradio_propagation_RS'] = "Rain scatter";
+$lang['gen_hamradio_propagation_SAT'] = "Satellite";
+$lang['gen_hamradio_propagation_TEP'] = "Trans-equatorial";
+$lang['gen_hamradio_propagation_TR'] = "Tropospheric ducting";
 
 $lang['gen_hamradio_satellite_name'] = 'Название спутника';
 $lang['gen_hamradio_satellite_mode'] = 'Режим работы спутника';
@@ -230,3 +249,5 @@ $lang['dashboard_logbooks_warning'] = 'У вас нет аппаратного �
 $lang['hams_at_no_activations_found'] = 'не найдены предстоящие активации. Проверьте позже.';
 
 $lang['datatables_language'] = "ru-RU";
+
+$lang['set_log_to_full_dates'] = "Set log to full dates";

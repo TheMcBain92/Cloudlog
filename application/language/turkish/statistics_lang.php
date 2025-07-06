@@ -25,14 +25,21 @@ $lang['statistics_number_of_qso_worked'] = "Çalışan QSO sayısı";
 *
 */
 
+$lang['statistics_distances_bands_all'] = "Tüm";
+$lang['statistics_distances_modes_all'] = "Tüm";
 $lang['statistics_distances_worked'] = "Çalışılan Mesafeler";
 $lang['statistics_distances_part1_contacts_were_plotted_furthest'] = "kişiler planlandı.<br /> En uzak bağlantınız şununlaydı";
 $lang['statistics_distances_part2_contacts_were_plotted_furthest'] = "gridsquare'de";
-$lang['statistics_distances_part3_contacts_were_plotted_furthest'] = "mesafe şuydu";
+$lang['statistics_distances_part3_contacts_were_plotted_furthest'] = "Mesafe şuydu";
+$lang['statistics_distances_part4_contacts_were_plotted_furthest'] = "Ortalama mesafe";
 $lang['statistics_distances_number_of_qsos'] = "QSO sayısı";
 $lang['statistics_distances_callsigns_worked'] = "Çağrı işaretleri çalıştı (en fazla 5 tane gösterildi)";
-$lang['statistics_distances_qsos_with'] = "QSO'lar ile";
-$lang['statistics_distances_and_band'] = "ve bant";
+$lang['statistics_distances_qsos_with'] = "mesafeli QSO'lar ile";
+$lang['statistics_distances_and_band'] = ", bant : ";
+$lang['statistics_distances_and_mode'] = ", mode : ";
+$lang['statistics_distances_and_power'] = ", gücü : ";
+$lang['statistics_distances_and_propagation'] = ", Yayın Mode : ";
+$lang['statistics_distances_no_qsos_to_plot'] = "No QSOs found to plot.";
 
 /*
 *
@@ -48,8 +55,16 @@ $lang['statistics_timeline'] = "Zaman Çizelgesi";
 *
 */
 
-$lang['statistics_days_with_qso'] = "Her yıl QSO'ların olduğu gün sayısı";
-$lang['statistics_days_with_qso_short'] = "QSO'lu Günler";
+$lang['statistics_tab_yearly'] = "Yearly";
+$lang['statistics_tab_streaks'] = "Streaks";
+$lang['statistics_tab_weekdays'] = "Days of the week";
+$lang['statistics_tab_daily'] = "Daily";
+$lang['statistics_days_yearly'] = "Number of days with QSOs each year";
+$lang['statistics_days_with_qso'] = "QSO'lu Günler";
+$lang['statistics_qsos_each_day'] = "Number of QSOs each day";
+$lang['statistics_weekdays_with_qso'] = "QSOs breakdown by day of the week";
+$lang['statistics_number_of_qsos_this_day'] = "Number of QSOs this day";
+$lang['statistics_number_of_qsos_this_weekday'] = "Number of QSOs for this day of the week";
 $lang['statistics_dwq_longest_streak_in_log'] = "Günlükteki QSO'larla en uzun seri";
 $lang['statistics_dwq_longest_streak_in_log_hint'] = "Maksimum en uzun 10 seri gösteriliyor!";
 $lang['statistics_dwq_streak_continuous_days'] = "Seri (QSO'larla sürekli günler)";

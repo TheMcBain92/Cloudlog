@@ -797,9 +797,19 @@ if ($this->session->userdata('user_id') != null) {
                 };
                 initplot(qso_loc, customdata);
             })
-
-
         });
+
+        function get_oldest_qso_date() {
+            $.ajax({
+                url: base_url + 'index.php/map/get_oldest_qso_date',
+                type: 'post',
+                success: function(data) {
+                    document.getElementById('from').value = data;
+                    document.getElementById('to').value = new Date().toISOString().split('T')[0];
+                },
+                error: function() {},
+            });
+        }
     </script>
 <?php } ?>
 
@@ -895,28 +905,34 @@ if ($this->session->userdata('user_id') != null) {
                 fetch(qso_loc)
                     .then(response => response.json())
                     .then(data => {
-                        var newMarkers = {};
-                        data.markers.forEach(marker => {
-                            var key = `${marker.lat},${marker.lng}`;
-                            newMarkers[key] = marker;
-                            if (!markers[key]) {
-                                var icon = L.divIcon({
-                                    className: 'custom-icon',
-                                    html: `<i class="${iconsList.qso.icon}" style="color:${iconsList.qso.color}"></i>`
-                                });
-                                L.marker([marker.lat, marker.lng], {
-                                        icon: icon
-                                    })
-                                    .addTo(map)
-                                    .bindPopup(marker.html);
-                            }
-                        });
-                        Object.keys(markers).forEach(key => {
-                            if (!newMarkers[key]) {
-                                map.removeLayer(markers[key]);
-                            }
-                        });
-                        markers = newMarkers;
+                        if (data.error !== "No QSOs found") {
+                            var newMarkers = {};
+                            data.markers.forEach(marker => {
+                                var key = `${marker.lat},${marker.lng}`;
+                                var html = `<h3>${marker.flag}${marker.label}</h3> ${marker.html}`;
+                                newMarkers[key] = marker;
+                                if (!markers[key]) {
+                                    var icon = L.divIcon({
+                                        className: 'custom-icon',
+                                        html: `<i class="${iconsList.qso.icon}" style="color:${iconsList.qso.color}"></i>`
+                                    });
+
+                                    L.marker([marker.lat, marker.lng], {
+                                            icon: icon
+                                        })
+                                        .addTo(map)
+                                        .bindPopup(html);
+                                }
+                            });
+                            Object.keys(markers).forEach(key => {
+                                if (!newMarkers[key]) {
+                                    map.removeLayer(markers[key]);
+                                }
+                            });
+                            markers = newMarkers;
+                        } else {
+                            console.log("No QSOs found to populate dashboard map.");
+                        }
                     });
             }
 
@@ -1109,11 +1125,222 @@ if ($this->session->userdata('user_id') != null) {
 <?php if ($this->uri->segment(1) == "qso") { ?>
 
     <script src="<?php echo base_url(); ?>assets/js/sections/qso.js"></script>
-    <?php if ($this->session->userdata('isWinkeyEnabled')) { ?>
+    <?php if ($this->session->userdata('isWinkeyEnabled') && !$this->session->userdata('isWinkeyWebsocketEnabled')) { ?>
         <script src="<?php echo base_url(); ?>assets/js/winkey.js"></script>
-    <?php }
+    <?php } elseif ($this->session->userdata('isWinkeyEnabled') && $this->session->userdata('isWinkeyWebsocketEnabled')) { ?>
+        <script>
+            console.log('Winkey Websocket enabled');
+        </script>
 
-    if ($this->optionslib->get_option('dxcache_url') != '') { ?>
+        <script>
+            let ws = null;
+
+            function connectWebSocket() {
+                if (ws !== null) {
+                    ws.close();
+                }
+
+                const chatRoom = "cw_room";
+                const wsUrl = `ws://localhost:8181?chatRoom=${encodeURIComponent(chatRoom)}`;
+
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = function() {
+                    document.getElementById('cw_socket_status').className = 'badge bg-success';
+                    document.getElementById('cw_socket_status').innerHTML = `Status: Connected`;
+                    logMessage(`Connected to WebSocket server in room: ${chatRoom}`);
+                };
+
+                ws.onclose = function() {
+                    document.getElementById('cw_socket_status').className = 'badge bg-secondary';
+                    document.getElementById('cw_socket_status').innerHTML = 'Status: Disconnected';
+                    logMessage('Disconnected from WebSocket server');
+                    ws = null;
+                };
+
+                ws.onerror = function(error) {
+                    logMessage('WebSocket Error: ' + error);
+                };
+
+                ws.onmessage = function(event) {
+                    logMessage('Received: ' + event.data);
+                };
+            }
+
+            function disconnectWebSocket() {
+                if (ws !== null) {
+                    ws.close();
+                }
+            }
+
+            function sendMessage() {
+                if (ws === null) {
+                    alert('Please connect to the WebSocket server first');
+                    return;
+                }
+
+                const message = document.getElementById('message').value;
+                if (message.trim() === '') {
+                    alert('Please enter a message');
+                    return;
+                }
+
+                // Prefix the message with "CW:" to indicate it's a CW message
+                const cwMessage = 'CW:' + message;
+                ws.send(cwMessage);
+                logMessage('Sent: ' + cwMessage);
+
+                // Clear the input field
+                document.getElementById('message').value = '';
+            }
+
+            function logMessage(message) {
+                const messageLog = document.getElementById('messageLog');
+                messageLog.value += message + '\n';
+                // Auto-scroll to bottom
+                messageLog.scrollTop = messageLog.scrollHeight;
+            }
+
+            // Support for Enter key in the input field
+            document.getElementById('message').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+        </script>
+
+        <script>
+            connectWebSocket();
+
+
+            function morsekey_func1() {
+                console.log("F1: " + UpdateMacros(function1Macro));
+
+                const cwMessage = 'CW:' + UpdateMacros(function1Macro);
+                ws.send(cwMessage);
+            }
+
+            function morsekey_func2() {
+                console.log("F2: " + UpdateMacros(function2Macro));
+                const cwMessage = 'CW:' + UpdateMacros(function2Macro);
+                ws.send(cwMessage);
+            }
+
+            function morsekey_func3() {
+                console.log("F3: " + UpdateMacros(function3Macro));
+                const cwMessage = 'CW:' + UpdateMacros(function3Macro);
+                ws.send(cwMessage);
+            }
+
+            function morsekey_func4() {
+                console.log("F4: " + UpdateMacros(function4Macro));
+                const cwMessage = 'CW:' + UpdateMacros(function4Macro);
+                ws.send(cwMessage);
+            }
+
+            function morsekey_func5() {
+                console.log("F5: " + UpdateMacros(function5Macro));
+                const cwMessage = 'CW:' + UpdateMacros(function5Macro);
+                ws.send(cwMessage);
+            }
+
+            let function1Name, function1Macro, function2Name, function2Macro, function3Name, function3Macro, function4Name, function4Macro, function5Name, function5Macro;
+
+            getMacros();
+
+            document.addEventListener('keydown', function(event) {
+
+                if (event.key === 'F1') {
+                    event.preventDefault();
+                    morsekey_func1();
+                }
+
+                if (event.key === 'F2') {
+                    event.preventDefault();
+                    morsekey_func2();
+                }
+
+                if (event.key === 'F3') {
+                    event.preventDefault();
+                    morsekey_func3();
+                }
+
+                if (event.key === 'F4') {
+                    event.preventDefault();
+                    morsekey_func4();
+                }
+
+                if (event.key === 'F5') {
+                    event.preventDefault();
+                    morsekey_func5();
+                }
+            });
+
+            function UpdateMacros(macrotext) {
+
+                // Get the values from the form set to uppercase
+                let CALL = document.getElementById("callsign").value.toUpperCase();
+                let RSTS = document.getElementById("rst_sent").value;
+
+                let newString;
+                newString = macrotext.replace(/\[MYCALL\]/g, my_call);
+                newString = newString.replace(/\[CALL\]/g, CALL);
+                newString = newString.replace(/\[RSTS\]/g, RSTS);
+                console.log(newString);
+                return newString;
+            }
+
+            // Call url and store the returned json data as variables
+            function getMacros() {
+                fetch(base_url + 'index.php/qso/cwmacros_json')
+                    .then(response => response.json())
+                    .then(data => {
+                        function1Name = data.function1_name;
+                        function1Macro = data.function1_macro;
+                        function2Name = data.function2_name;
+                        function2Macro = data.function2_macro;
+                        function3Name = data.function3_name;
+                        function3Macro = data.function3_macro;
+                        function4Name = data.function4_name;
+                        function4Macro = data.function4_macro;
+                        function5Name = data.function5_name;
+                        function5Macro = data.function5_macro;
+
+                        const morsekey_func1_Button = document.getElementById('morsekey_func1');
+                        morsekey_func1_Button.textContent = 'F1 (' + function1Name + ')';
+
+                        const morsekey_func2_Button = document.getElementById('morsekey_func2');
+                        morsekey_func2_Button.textContent = 'F2 (' + function2Name + ')';
+
+                        const morsekey_func3_Button = document.getElementById('morsekey_func3');
+                        morsekey_func3_Button.textContent = 'F3 (' + function3Name + ')';
+
+                        const morsekey_func4_Button = document.getElementById('morsekey_func4');
+                        morsekey_func4_Button.textContent = 'F4 (' + function4Name + ')';
+
+                        const morsekey_func5_Button = document.getElementById('morsekey_func5');
+                        morsekey_func5_Button.textContent = 'F5 (' + function5Name + ')';
+                    });
+            }
+
+
+            function sendMyMessage() {
+                const message = document.getElementById('sendText').value;
+                if (message.trim() === '') {
+                    alert('Please enter a message');
+                    return;
+                }
+
+                const cwMessage = 'CW:' + message;
+                ws.send(cwMessage);
+                logMessage('Sent: ' + cwMessage);
+
+                // Clear the input field
+                document.getElementById('sendText').value = '';
+            }
+        </script>
+    <?php } ?>
+    <?php if ($this->optionslib->get_option('dxcache_url') != '') { ?>
         <script type="text/javascript">
             var dxcluster_provider = '<?php echo base_url(); ?>index.php/dxcluster';
             $(document).ready(function() {
@@ -1454,7 +1681,7 @@ if ($this->session->userdata('user_id') != null) {
         $('#notice-alerts').delay(1000).fadeOut(5000);
 
         function setRst(mode) {
-            if (mode == 'JT65' || mode == 'JT65B' || mode == 'JT6C' || mode == 'JTMS' || mode == 'ISCAT' || mode == 'MSK144' || mode == 'JTMSK' || mode == 'QRA64' || mode == 'FT8' || mode == 'FT4' || mode == 'JS8' || mode == 'JT9' || mode == 'JT9-1' || mode == 'ROS') {
+            if (mode == 'JT65' || mode == 'JT65B' || mode == 'JT6C' || mode == 'JTMS' || mode == 'ISCAT' || mode == 'MSK144' || mode == 'JTMSK' || mode == 'QRA64' || mode == 'FT8' || mode == 'FT4' || mode == 'JS8' || mode == 'JT9' || mode == 'JT9-1' || mode == 'ROS' || mode == 'Q65' || mode == 'FST4' || mode == 'FST4W') {
                 $('#rst_sent').val('-5');
                 $('#rst_rcvd').val('-5');
             } else if (mode == 'FSK441' || mode == 'JT6M') {
@@ -1485,128 +1712,180 @@ if ($this->session->userdata('user_id') != null) {
     </script>
 
     <script>
-        // Javascript for controlling rig frequency.
-        var updateFromCAT = function() {
-            var cat2UI = function(ui, cat, allow_empty, allow_zero, callback_on_update) {
-                // Check, if cat-data is available
-                if (cat == null) {
-                    return;
-                } else if (typeof allow_empty !== 'undefined' && !allow_empty && cat == '') {
-                    return;
-                } else if (typeof allow_zero !== 'undefined' && !allow_zero && cat == '0') {
-                    return;
-                }
-                // Only update the ui-element, if cat-data has changed
-                if (ui.data('catValue') != cat) {
-                    ui.val(cat);
-                    ui.data('catValue', cat);
-                    if (typeof callback_on_update === 'function') {
-                        callback_on_update(cat);
-                    }
-                }
-            }
+        // Helper function to update a UI element with CAT data
+        const cat2UI = (ui, cat, allowEmpty = true, allowZero = true, callbackOnUpdate) => {
+            if (
+                cat == null ||
+                (!allowEmpty && cat === '') ||
+                (!allowZero && cat === '0')
+            ) return;
 
-            if ($('select.radios option:selected').val() != '0') {
-                radioID = $('select.radios option:selected').val();
-                $.getJSON("radio/json/" + radioID, function(data) {
-                    /* {
-                    "frequency": "2400210000",
-                        "frequency_rx": "10489710000",
-                        "mode": "SSB",
-                        "satmode": "S/X",
-                        "satname": "QO-100"
-                        "power": "20"
-                        "prop_mode": "SAT",
-                        "error": "not_logged_id" // optional, reserved for errors
-                    }  */
-                    if (data.error) {
-                        if (data.error == 'not_logged_in') {
-                            $(".radio_cat_state").remove();
-                            if ($('.radio_login_error').length == 0) {
-                                $('.qso_panel').prepend('<div class="alert alert-danger radio_login_error" role="alert"><i class="fas fa-broadcast-tower"></i> You\'re not logged it. Please <a href="<?php echo base_url(); ?>">login</a></div>');
-                            }
-                        }
-                        // Put future Errorhandling here
-                    } else {
-                        if ($('.radio_login_error').length != 0) {
-                            $(".radio_login_error").remove();
-                        }
-                        cat2UI($('#frequency'), data.frequency, false, true, function(d) {
-                            $("#band").val(frequencyToBand(d))
-                        });
-                        cat2UI($('#frequency_rx'), data.frequency_rx, false, true, function(d) {
-                            $("#band_rx").val(frequencyToBand(d))
-                        });
-                        cat2UI($('.mode'), data.mode, false, false, function(d) {
-                            setRst($(".mode").val())
-                        });
-                        cat2UI($('#sat_name'), data.satname, false, false);
-                        cat2UI($('#sat_mode'), data.satmode, false, false);
-                        cat2UI($('#transmit_power'), data.power, false, false);
-                        cat2UI($('#selectPropagation'), data.prop_mode, false, false);
-
-                        // Display CAT Timeout warning based on the figure given in the config file
-                        var minutes = Math.floor(<?php echo $this->optionslib->get_option('cat_timeout_interval'); ?> / 60);
-
-                        if (data.updated_minutes_ago > minutes) {
-                            $(".radio_cat_state").remove();
-                            if ($('.radio_timeout_error').length == 0) {
-                                $('#radio_status').prepend('<div class="alert alert-danger radio_timeout_error" role="alert"><i class="fas fa-broadcast-tower"></i> Radio connection timed-out: ' + $('select.radios option:selected').text() + ' data is ' + data.updated_minutes_ago + ' minutes old.</div>');
-                            } else {
-                                $('.radio_timeout_error').html('Radio connection timed-out: ' + $('select.radios option:selected').text() + ' data is ' + data.updated_minutes_ago + ' minutes old.');
-                            }
-                        } else {
-                            $(".radio_timeout_error").remove();
-                            text = '<i class="fas fa-broadcast-tower"></i><span style="margin-left:10px;"></span><b>TX:</b> ' + (Math.round(parseInt(data.frequency) / 100) / 10000).toFixed(4) + ' MHz';
-                            if (data.mode != null) {
-                                text = text + '<span style="margin-left:10px"></span>' + data.mode;
-                            }
-                            if (data.power != null && data.power != 0) {
-                                text = text + '<span style="margin-left:10px"></span>' + data.power + ' W';
-                            }
-                            ptext = '';
-                            if (data.prop_mode != null && data.prop_mode != '') {
-                                ptext = ptext + data.prop_mode;
-                                if (data.prop_mode == 'SAT') {
-                                    ptext = ptext + ' ' + data.satname;
-                                }
-                            }
-                            if (data.frequency_rx != null && data.frequency_rx != 0) {
-                                ptext = ptext + '<span style="margin-left:10px"></span><b>RX:</b> ' + (Math.round(parseInt(data.frequency_rx) / 1000) / 1000).toFixed(3) + ' MHz';
-                            }
-                            if (ptext != '') {
-                                text = text + '<span style="margin-left:10px"></span>(' + ptext + ')';
-                            }
-                            if (!$('#radio_cat_state').length) {
-                                $('#radio_status').prepend('<div aria-hidden="true"><div id="radio_cat_state" class="alert alert-success radio_cat_state" role="alert">' + text + '</div></div>');
-                            } else {
-                                $('#radio_cat_state').html(text);
-                            }
-                        }
-                    }
-                });
+            if (ui.data('catValue') != cat) {
+                ui.val(cat).data('catValue', cat);
+                if (typeof callbackOnUpdate === 'function') callbackOnUpdate(cat);
             }
         };
 
-        // Update frequency every three second
-        setInterval(updateFromCAT, 3000);
+        // Update UI from CAT data
+        const updateFromCAT = (radioID) => {
+            if (radioID === '0') return;
 
-        // If a radios selected from drop down select radio update.
-        $('.radios').change(updateFromCAT);
+            $.getJSON(`radio/json/${radioID}`, (data) => {
+                if (data.error) {
+                    if (data.error === 'not_logged_in') {
+                        handleLoginError();
+                    }
+                    return;
+                }
 
-        // If no radio is selected clear data
-        $(".radios").change(function() {
-            if ($(".radios option:selected").val() == 0) {
-                $("#sat_name").val("");
-                $("#sat_mode").val("");
-                $("#frequency").val("");
-                $("#frequency_rx").val("");
-                $("#band_rx").val("");
-                $("#selectPropagation").val($("#selectPropagation option:first").val());
-                $(".radio_timeout_error").remove();
+                clearLoginError();
+                updateUIWithCATData(data);
+            });
+        };
+
+        // Handle login error display
+        const handleLoginError = () => {
+            $(".radio_cat_state").remove();
+            if ($('.radio_login_error').length === 0) {
+                $('.qso_panel').prepend(
+                    '<div class="alert alert-danger radio_login_error" role="alert">' +
+                    '<i class="fas fa-broadcast-tower"></i> You\'re not logged in. ' +
+                    'Please <a href="<?php echo base_url(); ?>">login</a></div>'
+                );
             }
+        };
+
+        // Clear login error
+        const clearLoginError = () => {
+            $(".radio_login_error").remove();
+        };
+
+        // Update UI elements with CAT data
+        const updateUIWithCATData = (data) => {
+            cat2UI($('#frequency'), data.frequency, false, true, (d) => {
+                $("#band").val(frequencyToBand(d));
+            });
+            cat2UI($('#frequency_rx'), data.frequency_rx, false, true, (d) => {
+                $("#band_rx").val(frequencyToBand(d));
+            });
+            cat2UI($('.mode'), data.mode, false, false, () => {
+                setRst($(".mode").val());
+            });
+            cat2UI($('#sat_name'), data.satname, false, false);
+            cat2UI($('#sat_mode'), data.satmode, false, false);
+            cat2UI($('#transmit_power'), data.power, false, false);
+            cat2UI($('#selectPropagation'), data.prop_mode, false, false);
+
+            handleCATTimeout(data);
+        };
+
+        // Handle CAT timeout
+        const handleCATTimeout = (data) => {
+            const minutes = Math.floor(<?php echo $this->optionslib->get_option('cat_timeout_interval'); ?> / 60);
+
+            if (data.updated_minutes_ago > minutes) {
+                $(".radio_cat_state").remove();
+                const errorText = `Radio connection timed-out: ${$('select.radios option:selected').text()} data is ${data.updated_minutes_ago} minutes old.`;
+                if ($('.radio_timeout_error').length === 0) {
+                    $('#radio_status').prepend(
+                        `<div class="alert alert-danger radio_timeout_error" role="alert"><i class="fas fa-broadcast-tower"></i> ${errorText}</div>`
+                    );
+                } else {
+                    $('.radio_timeout_error').html(errorText);
+                }
+            } else {
+                $(".radio_timeout_error").remove();
+                updateCATStatusDisplay(data);
+            }
+        };
+
+        // Update the status display
+        const updateCATStatusDisplay = (data) => {
+            let text = `<i class="fas fa-broadcast-tower"></i><span style="margin-left:10px;"></span><b>TX:</b> ${(Math.round(parseInt(data.frequency) / 100) / 10000).toFixed(4)} MHz`;
+            if (data.mode) text += `<span style="margin-left:10px"></span>${data.mode}`;
+            if (data.power && data.power !== 0) text += `<span style="margin-left:10px"></span>${data.power} W`;
+
+            let ptext = '';
+            if (data.prop_mode) {
+                ptext = data.prop_mode;
+                if (data.prop_mode === 'SAT') ptext += ` ${data.satname}`;
+            }
+            if (data.frequency_rx && data.frequency_rx !== 0) {
+                ptext += `<span style="margin-left:10px"></span><b>RX:</b> ${(Math.round(parseInt(data.frequency_rx) / 1000) / 1000).toFixed(3)} MHz`;
+            }
+            if (ptext) text += `<span style="margin-left:10px"></span>(${ptext})`;
+
+            if (!$('#radio_cat_state').length) {
+                $('#radio_status').prepend(
+                    `<div aria-hidden="true"><div id="radio_cat_state" class="alert alert-success radio_cat_state" role="alert">${text}</div></div>`
+                );
+            } else {
+                $('#radio_cat_state').html(text);
+            }
+        };
+
+        // Reset UI when no radio is selected
+        const resetUI = () => {
+            $("#sat_name, #sat_mode, #frequency, #frequency_rx, #band_rx").val("");
+            $("#selectPropagation").val($("#selectPropagation option:first").val());
+            $(".radio_timeout_error").remove();
+        };
+
+        // Event listeners
+        $(document).ready(() => {
+
+            /**
+             * Prevents multiple form submissions by tracking submission state
+             * 
+             * This script prevents duplicate QSO (contact) submissions by:
+             * - Maintaining an isSubmitting flag to track form submission state
+             * - Adding an event listener to the 'qso_input' form
+             * - Preventing form submission if a submission is already in progress
+             * - Setting the flag to true when a valid submission begins
+             * 
+             * @since Unknown
+             * @global boolean isSubmitting Flag to track if form is currently being submitted
+             */
+            let isSubmitting = false;
+            document.getElementById('qso_input').addEventListener('submit', function(e) {
+                if (isSubmitting) {
+                    e.preventDefault();
+                    return false;
+                }
+                isSubmitting = true;
+            });
+
+            // Update frequency every three seconds for the selected radio
+            setInterval(() => {
+                const selectedRadioID = $('select.radios option:selected').val();
+                if (selectedRadioID !== '0') {
+                    updateFromCAT(selectedRadioID);
+                }
+            }, 3000);
+
+            // Trigger updateFromCAT when any <select> with class 'radios' changes
+            $('.radios').on('change', function() {
+                const selectedRadioID = $(this).val();
+                if (selectedRadioID === '0') {
+                    resetUI();
+                } else {
+                    updateFromCAT(selectedRadioID);
+                }
+            });
         });
     </script>
+
+    <script>
+        $(document).ready(function() {
+            // Synchronize the two selects
+            $('.radios').on('change', function() {
+                const selectedValue = $(this).val(); // Get the selected value
+                $('.radios').not(this).val(selectedValue); // Update other selects to match
+            });
+        });
+    </script>
+
+
 
 <?php } ?>
 

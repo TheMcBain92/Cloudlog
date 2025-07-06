@@ -1024,6 +1024,10 @@ class Logbook_model extends CI_Model
       if ($data['COL_BAND'] == '70cm' && $data['COL_BAND_RX'] == '2m') {
         $sat_name = 'AO-7[B]';
       }
+    } else if ($data['COL_SAT_NAME'] == 'MESAT-1') {
+      $sat_name = 'MESAT1';
+    } else if ($data['COL_SAT_NAME'] == 'SONATE-2') {
+      $sat_name = 'SONATE-2 APRS';
     } else if ($data['COL_SAT_NAME'] == 'QO-100') {
       $sat_name = 'QO-100_NB';
     } else if ($data['COL_SAT_NAME'] == 'AO-92') {
@@ -2036,6 +2040,9 @@ class Logbook_model extends CI_Model
     } else {
       $logbooks_locations_array = $StationLocationsArray;
     }
+
+    // Only take the first 4 characters of the grid
+    $grid = substr($grid, 0, 4);
 
     $this->db->select('COL_GRIDSQUARE');
     $this->db->where_in('station_id', $logbooks_locations_array);
@@ -4237,6 +4244,7 @@ class Logbook_model extends CI_Model
       # try: $a looks like a call (.\d[A-Z]) and $b doesn't (.\d), they are
       # swapped. This still does not properly handle calls like DJ1YFK/KH7K where
       # only the OP's experience says that it's DJ1YFK on KH7K.
+
       if (!$c && $a && $b) {                          # $a and $b exist, no $c
         if (preg_match($lidadditions, $b)) {        # check if $b is a lid-addition
           $b = $a;
@@ -4333,14 +4341,13 @@ class Logbook_model extends CI_Model
 
   public function get_entity($dxcc)
   {
-    $sql = "select name, cqz, lat, 'long' from dxcc_entities where adif = " . $dxcc;
-    $query = $this->db->query($sql);
-
-    if ($query->result() > 0) {
-      $row = $query->row_array();
-      return $row;
-    }
-    return '';
+      $sql = "SELECT name, cqz, lat, `long` FROM dxcc_entities WHERE adif = ?";
+      $query = $this->db->query($sql, array($dxcc));
+  
+      if ($query->num_rows() > 0) {
+          return $query->row_array();
+      }
+      return '';
   }
 
   /*
@@ -4430,30 +4437,38 @@ class Logbook_model extends CI_Model
     if ($r->num_rows() > 0) {
       foreach ($r->result_array() as $row) {
         $callsign = $row['COL_CALL'];
-        if ($this->config->item('callbook') == "qrz" && $this->config->item('qrz_username') != null && $this->config->item('qrz_password') != null) {
-          // Lookup using QRZ
-          if (!$this->load->is_loaded('qrz')) {
-            $this->load->library('qrz');
-          }
+        if ($this->session->userdata('callbook_type') == "QRZ") {
+					// Lookup using QRZ
+					$this->load->library('qrz');
 
-          if (!$this->session->userdata('qrz_session_key')) {
-            $qrz_session_key = $this->qrz->session($this->config->item('qrz_username'), $this->config->item('qrz_password'));
-            $this->session->set_userdata('qrz_session_key', $qrz_session_key);
-          }
+					// Load the encryption library
+					$this->load->library('encryption');
+
+					// Decrypt the password
+					$decrypted_password = $this->encryption->decrypt($this->session->userdata('callbook_password'));
+
+					if(!$this->session->userdata('qrz_session_key')) {
+						$qrz_session_key = $this->qrz->session($this->session->userdata('callbook_username'), $decrypted_password);
+						$this->session->set_userdata('qrz_session_key', $qrz_session_key);
+					}
 
           $callbook = $this->qrz->search($callsign, $this->session->userdata('qrz_session_key'));
         }
 
-        if ($this->config->item('callbook') == "hamqth" && $this->config->item('hamqth_username') != null && $this->config->item('hamqth_password') != null) {
-          // Load the HamQTH library
-          if (!$this->load->is_loaded('hamqth')) {
-            $this->load->library('hamqth');
-          }
+        if ($this->session->userdata('callbook_type') == "HamQTH") {
+					// Load the HamQTH library
+					$this->load->library('hamqth');
 
-          if (!$this->session->userdata('hamqth_session_key')) {
-            $hamqth_session_key = $this->hamqth->session($this->config->item('hamqth_username'), $this->config->item('hamqth_password'));
-            $this->session->set_userdata('hamqth_session_key', $hamqth_session_key);
-          }
+					// Load the encryption library
+					$this->load->library('encryption');
+
+					// Decrypt the password
+					$decrypted_password = $this->encryption->decrypt($this->session->userdata('callbook_password'));
+					
+					if(!$this->session->userdata('hamqth_session_key')) {
+						$hamqth_session_key = $this->hamqth->session($this->session->userdata('callbook_username'), $decrypted_password);
+						$this->session->set_userdata('hamqth_session_key', $hamqth_session_key);
+					}
 
           $callbook = $this->hamqth->search($callsign, $this->session->userdata('hamqth_session_key'));
 
@@ -4565,12 +4580,18 @@ class Logbook_model extends CI_Model
   {
     $callbook = null;
     try {
-      if ($this->config->item('callbook') == "qrz" && $this->config->item('qrz_username') != null && $this->config->item('qrz_password') != null) {
+      if ($this->session->userdata('callbook_type') == "QRZ") {
         // Lookup using QRZ
         $this->load->library('qrz');
 
-        if (!$this->session->userdata('qrz_session_key')) {
-          $qrz_session_key = $this->qrz->session($this->config->item('qrz_username'), $this->config->item('qrz_password'));
+        // Load the encryption library
+        $this->load->library('encryption');
+
+        // Decrypt the password
+        $decrypted_password = $this->encryption->decrypt($this->session->userdata('callbook_password'));
+
+        if(!$this->session->userdata('qrz_session_key')) {
+          $qrz_session_key = $this->qrz->session($this->session->userdata('callbook_username'), $decrypted_password);
           $this->session->set_userdata('qrz_session_key', $qrz_session_key);
         }
 
@@ -4578,7 +4599,7 @@ class Logbook_model extends CI_Model
 
         // if we got nothing, it's probably because our session key is invalid, try again
         if (($callbook['callsign'] ?? '') == '') {
-          $qrz_session_key = $this->qrz->session($this->config->item('qrz_username'), $this->config->item('qrz_password'));
+          $qrz_session_key = $this->qrz->session($this->session->userdata('callbook_username'), $decrypted_password);
           $this->session->set_userdata('qrz_session_key', $qrz_session_key);
           $callbook = $this->qrz->search($callsign, $this->session->userdata('qrz_session_key'), $use_fullname);
           // if we still got nothing, and it's a compound callsign, then try a search for the base call
@@ -4588,12 +4609,18 @@ class Logbook_model extends CI_Model
         }
       }
 
-      if ($this->config->item('callbook') == "hamqth" && $this->config->item('hamqth_username') != null && $this->config->item('hamqth_password') != null) {
+      if ($this->session->userdata('callbook_type') == "HamQTH") {
         // Load the HamQTH library
         $this->load->library('hamqth');
 
-        if (!$this->session->userdata('hamqth_session_key')) {
-          $hamqth_session_key = $this->hamqth->session($this->config->item('hamqth_username'), $this->config->item('hamqth_password'));
+        // Load the encryption library
+        $this->load->library('encryption');
+
+        // Decrypt the password
+        $decrypted_password = $this->encryption->decrypt($this->session->userdata('callbook_password'));
+        
+        if(!$this->session->userdata('hamqth_session_key')) {
+          $hamqth_session_key = $this->hamqth->session($this->session->userdata('callbook_username'), $decrypted_password);
           $this->session->set_userdata('hamqth_session_key', $hamqth_session_key);
         }
 
@@ -4601,7 +4628,7 @@ class Logbook_model extends CI_Model
 
         // If HamQTH session has expired, start a new session and retry the search.
         if ($callbook['error'] == "Session does not exist or expired") {
-          $hamqth_session_key = $this->hamqth->session($this->config->item('hamqth_username'), $this->config->item('hamqth_password'));
+          $hamqth_session_key = $this->hamqth->session($this->session->userdata('callbook_username'), $decrypted_password);
           $this->session->set_userdata('hamqth_session_key', $hamqth_session_key);
           $callbook = $this->hamqth->search($callsign, $this->session->userdata('hamqth_session_key'));
         }
@@ -4684,6 +4711,9 @@ class Logbook_model extends CI_Model
   function get_lotw_qsos_to_upload($station_id, $start_date, $end_date)
   {
 
+    // Missing in tqsl 2.7.3 config.xml
+    $lotw_unsupported_modes = array('INTERNET', 'RPT');
+
     $this->db->select('COL_PRIMARY_KEY,COL_CALL, COL_BAND, COL_BAND_RX, COL_TIME_ON, COL_RST_RCVD, COL_RST_SENT, COL_MODE, COL_SUBMODE, COL_FREQ, COL_FREQ_RX, COL_GRIDSQUARE, COL_SAT_NAME, COL_PROP_MODE, COL_LOTW_QSL_SENT, station_id');
 
     $this->db->where("station_id", $station_id);
@@ -4691,7 +4721,7 @@ class Logbook_model extends CI_Model
     $this->db->where('COL_LOTW_QSL_SENT', NULL);
     $this->db->or_where('COL_LOTW_QSL_SENT !=', "Y");
     $this->db->group_end();
-    $this->db->where('COL_PROP_MODE !=', "INTERNET");
+    $this->db->where_not_in('COL_PROP_MODE', $lotw_unsupported_modes);
     $this->db->where('COL_TIME_ON >=', $start_date);
     $this->db->where('COL_TIME_ON <=', $end_date);
     $this->db->order_by("COL_TIME_ON", "desc");
@@ -4764,19 +4794,23 @@ class Logbook_model extends CI_Model
 
   // [JSON PLOT] return array for plot qso for map //
   public function get_plot_array_for_map($qsos_result, $isVisitor = false)
-  {
+{
     $this->load->library('qra');
-
+    $CI = &get_instance();
+    $CI->load->library('DxccFlag');
+    
     $json["markers"] = array();
-
+    
     foreach ($qsos_result as $row) {
-      $plot = array('lat' => 0, 'lng' => 0, 'html' => '', 'label' => '', 'confirmed' => 'N');
-
+      $plot = array('lat' => 0, 'lng' => 0, 'html' => '', 'label' => '', 'flag' => '', 'confirmed' => 'N');
+      
       $plot['label'] = $row->COL_CALL;
-
-      $plot['html'] = "Callsign: " . $row->COL_CALL . "<br />Date/Time: " . $row->COL_TIME_ON . "<br />";
-      $plot['html'] .= ($row->COL_SAT_NAME != null) ? ("SAT: " . $row->COL_SAT_NAME . "<br />") : ("Band: " . $row->COL_BAND . "<br />");
-      $plot['html'] .= "Mode: " . ($row->COL_SUBMODE == null ? $row->COL_MODE : $row->COL_SUBMODE) . "<br />";
+      $flag = strtolower($CI->dxccflag->getISO($row->COL_DXCC));
+      $plot['flag'] = '<span data-bs-toggle="tooltip" title="' . ucwords(strtolower(($row->name==null?"- NONE -":$row->name))) . '"><span class="fi fi-' . $flag .'"></span></span> ';
+      $plot['html'] = ($row->COL_GRIDSQUARE != null ?  "<b>Grid:</b> " . $row->COL_GRIDSQUARE . "<br />" : "");
+      $plot['html'] .= "<b>Date/Time:</b> " . $row->COL_TIME_ON . "<br />";
+      $plot['html'] .= ($row->COL_SAT_NAME != null) ? ("<b>SAT:</b> " . $row->COL_SAT_NAME . "<br />") : ("<b>Band:</b> " . $row->COL_BAND . " ");
+      $plot['html'] .= "<b>Mode:</b> " . ($row->COL_SUBMODE == null ? $row->COL_MODE : $row->COL_SUBMODE) . "<br />";
 
       // check if qso is confirmed //
       if (!$isVisitor) {
@@ -4822,8 +4856,98 @@ class Logbook_model extends CI_Model
     }
     return $json;
   }
+
+  public function get_oldest_qso_date()
+  {
+    $query = $this->db->query('SELECT DATE(min(col_time_on)) as oldest_qso_date FROM TABLE_HRD_CONTACTS_V01');
+    $row = $query->row();
+    if (isset($row)) {
+      return $row->oldest_qso_date;
+    }
+  }
+
+  /**
+  * Processes a batch of QRZ ADIF records for efficient database updates.
+  *
+  * @param array $batch_data Array of records from the ADIF file.
+  * @return string HTML table rows for the processed batch.
+  */
+  public function process_qrz_batch($batch_data) {
+    $table = "";
+    $update_batch_data = [];
+    $this->load->model('Stations');
+
+    if (empty($batch_data)) {
+      return '';
+    }
+
+    // Step 1: Build WHERE clause for fetching potential matches
+    $this->db->select($this->config->item('table_name').'.COL_PRIMARY_KEY, '.$this->config->item('table_name').'.COL_CALL, '.$this->config->item('table_name').'.COL_TIME_ON, '.$this->config->item('table_name').'.COL_BAND, '.$this->config->item('table_name').'.COL_MODE, ');
+    $this->db->from($this->config->item('table_name'));
+    $this->db->group_start(); // Start grouping OR conditions
+    foreach ($batch_data as $record) {
+      $this->db->or_group_start(); // Start group for this record's AND conditions
+      $this->db->where($this->config->item('table_name').'.COL_CALL', $record['call']);
+      $this->db->where($this->config->item('table_name').'.COL_TIME_ON', $record['time_on']);
+      $this->db->where($this->config->item('table_name').'.COL_BAND', $record['band']);
+      $this->db->group_end(); // End group for this record's AND conditions
+    }
+    $this->db->group_end(); // End grouping OR conditions
+
+    // Step 2: Fetch Matches
+    $query = $this->db->get();
+    $db_results = $query->result_array();
+
+    // Index DB results for faster lookup
+    $indexed_results = [];
+    foreach ($db_results as $row) {
+      $key = $row['COL_CALL'] . '|' . $row['COL_TIME_ON'] . '|' . $row['COL_BAND'];
+      $indexed_results[$key] = $row['COL_PRIMARY_KEY'];
+    }
+
+    // Step 3 & 4: Prepare Batch Update and Build Table Rows
+    foreach ($batch_data as $record) {
+      $match_key = $record['call'] . '|' . $record['time_on'] . '|' . $record['band'];
+      $log_status = '<span class="badge text-bg-danger">Not Found</span>';
+      $primary_key = null;
+
+      if (isset($indexed_results[$match_key])) {
+        $primary_key = $indexed_results[$match_key];
+        $log_status = '<span class="badge text-bg-success">Confirmed</span>';
+
+        // Prepare data for batch update
+        $update_batch_data[] = [
+          'COL_PRIMARY_KEY' => $primary_key,
+          'COL_QRZCOM_QSO_DOWNLOAD_DATE' => $record['qsl_date'],
+          'COL_QRZCOM_QSO_UPLOAD_STATUS' => $record['qsl_rcvd'] // Should be 'Y' if confirmed
+        ];
+      }
+
+      // Build table row
+      $table .= "<tr>";
+      $table .= "<td>" . $record['station_callsign'] . "</td>";
+      $table .= "<td>" . $record['time_on'] . "</td>";
+      $table .= "<td>" . $record['call'] . "</td>";
+      $table .= "<td>" . $record['mode'] . "</td>";
+      $table .= "<td>" . $record['qsl_date'] . "</td>";
+      $table .= "<td>" . ($record['qsl_rcvd'] == 'Y' ? '<span class="badge text-bg-success">Yes</span>' : '<span class="badge text-bg-danger">No</span>') . "</td>";
+      $table .= "</tr>";
+    }
+
+    // Step 5: Execute Batch Update
+    if (!empty($update_batch_data)) {
+      $this->db->update_batch($this->config->item('table_name'), $update_batch_data, 'COL_PRIMARY_KEY');
+    }
+
+    // Step 6: Return Table HTML
+    return $table;
+  }
 }
 
+// Function to validate ADIF date format
+// This function checks if the date is in the correct format (YYYYMMDD) and is a valid date.
+// It uses the DateTime class to create a date object from the given date string and format. If the date is valid, it returns true; otherwise, it returns false.
+// The function also allows specifying a different format if needed, defaulting to 'Ymd' (YYYYMMDD).
 function validateADIFDate($date, $format = 'Ymd')
 {
   $d = DateTime::createFromFormat($format, $date);

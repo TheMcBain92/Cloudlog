@@ -26,6 +26,7 @@ $lang['general_word_filtering_on'] = "筛选打开";
 $lang['general_word_not_display'] = "不显示";
 $lang['general_word_icon'] = "图标";
 $lang['general_word_never'] = "从不";
+$lang['general_word_undefined'] = "Undefined";
 
 $lang['general_word_date'] = '日期';
 $lang['general_word_startdate'] = "开始时间";
@@ -152,6 +153,24 @@ $lang['gen_hamradio_qslmsg'] = 'QSL 信息';
 $lang['gen_hamradio_locator'] = '定位地图';
 $lang['gen_hamradio_transmit_power'] = '发射功率 (W)';
 $lang['gen_hamradio_propagation_mode'] = '传播模式';
+$lang['gen_hamradio_propagation_AS'] = "Aircraft Scatter";
+$lang['gen_hamradio_propagation_AUR'] = "Aurora";
+$lang['gen_hamradio_propagation_AUE'] = "Aurora-E";
+$lang['gen_hamradio_propagation_BS'] = "Back scatter";
+$lang['gen_hamradio_propagation_ECH'] = "EchoLink";
+$lang['gen_hamradio_propagation_EME'] = "Earth-Moon-Earth";
+$lang['gen_hamradio_propagation_ES'] = "Sporadic E";
+$lang['gen_hamradio_propagation_FAI'] = "Field Aligned Irregularities";
+$lang['gen_hamradio_propagation_F2'] = "F2 Reflection";
+$lang['gen_hamradio_propagation_INTERNET'] = "Internet-assisted";
+$lang['gen_hamradio_propagation_ION'] = "Ionoscatter";
+$lang['gen_hamradio_propagation_IRL'] = "IRLP";
+$lang['gen_hamradio_propagation_MS'] = "Meteor scatter";
+$lang['gen_hamradio_propagation_RPT'] = "Terrestrial or atmospheric repeater or transponder";
+$lang['gen_hamradio_propagation_RS'] = "Rain scatter";
+$lang['gen_hamradio_propagation_SAT'] = "Satellite";
+$lang['gen_hamradio_propagation_TEP'] = "Trans-equatorial";
+$lang['gen_hamradio_propagation_TR'] = "Tropospheric ducting";
 
 $lang['gen_hamradio_satellite_name'] = '卫星名称';
 $lang['gen_hamradio_satellite_mode'] = '卫星模式';
@@ -229,3 +248,5 @@ $lang['dashboard_logbooks_warning'] = '你没有电台日志。 请前往<a href
 $lang['hams_at_no_activations_found'] = '未找到即将进行的激活。 请稍后再回来查看。';
 
 $lang['datatables_language'] = "en-GB";
+
+$lang['set_log_to_full_dates'] = "Set log to full dates";

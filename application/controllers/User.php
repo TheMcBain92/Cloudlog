@@ -22,7 +22,7 @@ class User extends CI_Controller
 	public function index()
 	{
 		$this->load->model('user_model');
-		
+
 		// Check if the user is authorized
 		if (!$this->user_model->authorize(99)) {
 			$this->session->set_flashdata('notice', 'You\'re not allowed to do that!');
@@ -210,9 +210,12 @@ class User extends CI_Controller
 				$this->input->post('user_quicklog_enter'),
 				$this->input->post('language'),
 				$this->input->post('user_hamsat_key'),
-				$this->input->post('user_hamsat_workable_only')
+				$this->input->post('user_hamsat_workable_only'),
+				$this->input->post('user_callbook_type'),
+				$this->input->post('user_callbook_username'),
+				$this->input->post('user_callbook_password')
 			)) {
-					// Check for errors
+				// Check for errors
 				case EUSERNAMEEXISTS:
 					$data['username_error'] = 'Username <b>' . $this->input->post('user_name') . '</b> already in use!';
 					break;
@@ -222,12 +225,14 @@ class User extends CI_Controller
 				case EPASSWORDINVALID:
 					$data['password_error'] = 'Invalid password!';
 					break;
-					// All okay, return to user screen
+				// All okay, return to user screen
 				case OK:
 					$this->session->set_flashdata('notice', 'User ' . $this->input->post('user_name') . ' added');
 					redirect('user');
 					return;
 			}
+
+
 			$data['page_title'] = "Users";
 
 			$this->load->view('interface_assets/header', $data);
@@ -571,6 +576,49 @@ class User extends CI_Controller
 				$data['user_winkey'] = $q->winkey;
 			}
 
+			if ($this->input->post('user_winkey_websocket')) {
+				$data['user_winkey_websocket'] = $this->input->post('user_winkey_websocket', true);
+			} else {
+				$data['user_winkey_websocket'] = $q->winkey_websocket;
+			}
+			
+			$this->load->model('user_options_model');
+			$callbook_type_object = $this->user_options_model->get_options('callbook')->result();
+
+			if ($this->input->post('user_callbook_type', true)) {
+				$data['user_callbook_type'] = $this->input->post('user_callbook_type', true);
+			} else {
+				if (isset($callbook_type_object[1]->option_value)) {
+					$data['user_callbook_type'] = $callbook_type_object[1]->option_value;
+				} else {
+					$data['user_callbook_type'] = "";
+				}
+			}
+
+
+			// Handle user_callbook_username
+			if ($this->input->post('user_callbook_username', true)) {
+				$data['user_callbook_username'] = $this->input->post('user_callbook_username', true);
+			} else {
+				if (isset($callbook_type_object[2]->option_value)) {
+					$data['user_callbook_username'] = $callbook_type_object[2]->option_value;
+				} else {
+					$data['user_callbook_username'] = "";
+				}
+			}
+
+			// Handle user_callbook_password
+			if ($this->input->post('user_callbook_password', true)) {
+				$data['user_callbook_password'] = $this->input->post('user_callbook_password', true);
+			} else {
+				if (isset($callbook_type_object[0]->option_value)) {
+					$data['user_callbook_password'] = $callbook_type_object[0]->option_value;
+				} else {
+					$data['user_callbook_password'] = "";
+				}
+			}
+
+
 			$this->load->model('user_options_model');
 			$hamsat_user_object = $this->user_options_model->get_options('hamsat')->result();
 
@@ -594,8 +642,6 @@ class User extends CI_Controller
 					$data['user_hamsat_workable_only'] = "";
 				}
 			}
-
-			// Get Settings for Dashboard
 
 			// Set defaults
 			$data['dashboard_upcoming_dx_card'] = false;
@@ -690,8 +736,14 @@ class User extends CI_Controller
 			$this->load->view('interface_assets/footer');
 		} else {
 			unset($data);
-			switch ($this->user_model->edit($this->input->post())) {
-					// Check for errors
+
+
+			$post_data = $this->input->post();
+			if (!isset($post_data['user_winkey_websocket'])) {
+				$post_data['user_winkey_websocket'] = '0';
+			}
+			switch ($this->user_model->edit($post_data)) {
+				// Check for errors
 				case EUSERNAMEEXISTS:
 					$data['username_error'] = 'Username <b>' . $this->input->post('user_name', true) . '</b> already in use!';
 					break;
@@ -701,7 +753,7 @@ class User extends CI_Controller
 				case EPASSWORDINVALID:
 					$data['password_error'] = 'Invalid password!';
 					break;
-					// All okay, return to user screen
+				// All okay, return to user screen
 				case OK:
 					if ($this->session->userdata('user_id') == $this->uri->segment(3)) { // Editing own User? Set cookie!
 						$cookie = array(
@@ -715,6 +767,53 @@ class User extends CI_Controller
 						$this->input->set_cookie($cookie);
 					}
 					if ($this->session->userdata('user_id') == $this->input->post('id', true)) {
+
+						// Handle user_callbook_password
+
+						if (isset($_POST['user_callbook_password']) && !empty($_POST['user_callbook_password'])) {
+
+							// Handle user_callbook_type
+							if (isset($_POST['user_callbook_type'])) {
+								$this->user_options_model->set_option('callbook', 'callbook_type', array('value' => $_POST['user_callbook_type']));
+							} else {
+								$this->user_options_model->set_option('callbook', 'callbook_type', array('value' => ''));
+							}
+
+							// Handle user_callbook_username
+							if (isset($_POST['user_callbook_username'])) {
+								$this->user_options_model->set_option('callbook', 'callbook_username', array('value' => $_POST['user_callbook_username']));
+							} else {
+								$this->user_options_model->set_option('callbook', 'callbook_username', array('value' => ''));
+							}
+
+							// Load the encryption library
+							$this->load->library('encryption');
+
+							// Encrypt the password
+							$encrypted_password = $this->encryption->encrypt($_POST['user_callbook_password']);
+
+							// Save the encrypted password
+							$this->user_options_model->set_option('callbook', 'callbook_password', array('value' => $encrypted_password));
+
+							// if callbook type is QRZ
+							if ($_POST['user_callbook_type'] == 'QRZ') {
+								// Lookup using QRZ
+								$this->load->library('qrz');
+
+								$qrz_session_key = $this->qrz->session($_POST['user_callbook_username'], $_POST['user_callbook_password']);
+								$this->session->set_userdata('qrz_session_key', $qrz_session_key);
+							} elseif ($_POST['user_callbook_type'] == "HamQTH") {
+								$this->load->library('hamqth');
+								$hamqth_session_key = $this->hamqth->session($_POST['user_callbook_username'], $_POST['user_callbook_password']);
+								$this->session->set_userdata('hamqth_session_key', $hamqth_session_key);
+							}
+
+							// Update Session data
+							$this->session->set_userdata('callbook_type', $_POST['user_callbook_type']);
+							$this->session->set_userdata('callbook_username', $_POST['user_callbook_username']);
+							$this->session->set_userdata('callbook_password', $encrypted_password);
+						}
+
 						if (isset($_POST['user_dashboard_enable_dxpedition_card'])) {
 							$this->user_options_model->set_option('dashboard', 'dashboard_upcoming_dx_card', array('enabled' => 'true'));
 						} else {
@@ -805,6 +904,7 @@ class User extends CI_Controller
 			$data['user_quicklog_enter'] = $this->input->post('user_quicklog_enter');
 			$data['language'] = $this->input->post('language');
 			$data['user_winkey'] = $this->input->post('user_winkey');
+			$data['user_winkey_websocket'] = $this->input->post('user_winkey_websocket');
 			$data['user_hamsat_key'] = $this->input->post('user_hamsat_key');
 			$data['user_hamsat_workable_only'] = $this->input->post('user_hamsat_workable_only');
 
@@ -958,7 +1058,6 @@ class User extends CI_Controller
 					'secure' => FALSE
 
 				);
-				$this->input->set_cookie($cookie);
 
 				// Create a remember me cookie
 				if ($this->input->post('remember_me') == '1') {
