@@ -1231,6 +1231,30 @@ $(document).ready(function() {
     <?php } elseif ($this->session->userdata('isWinkeyEnabled') && $this->session->userdata('isWinkeyWebsocketEnabled')) { ?>
         <script>
             console.log('Winkey Websocket enabled');
+            
+            // Mode detection for WebSocket Winkey
+            document.addEventListener('DOMContentLoaded', function() {
+                const ModeSelected = document.getElementById('mode');
+                
+                function toggleWinkeyVisibility() {
+                    const winkeyElement = document.getElementById('winkey');
+                    if (ModeSelected && winkeyElement) {
+                        if (ModeSelected.value === 'CW') {
+                            winkeyElement.style.display = 'block';
+                        } else {
+                            winkeyElement.style.display = 'none';
+                        }
+                    }
+                }
+                
+                // Check initial mode
+                toggleWinkeyVisibility();
+                
+                // Listen for mode changes
+                if (ModeSelected) {
+                    ModeSelected.addEventListener('change', toggleWinkeyVisibility);
+                }
+            });
         </script>
 
         <script>
@@ -1250,6 +1274,8 @@ $(document).ready(function() {
                     document.getElementById('cw_socket_status').className = 'badge bg-success';
                     document.getElementById('cw_socket_status').innerHTML = `Status: Connected`;
                     logMessage(`Connected to WebSocket server in room: ${chatRoom}`);
+                    // Get initial speed once when connected, no polling
+                    setTimeout(getCwSpeed, 1000);
                 };
 
                 ws.onclose = function() {
@@ -1265,6 +1291,20 @@ $(document).ready(function() {
 
                 ws.onmessage = function(event) {
                     logMessage('Received: ' + event.data);
+                    
+                    // Handle CW speed responses
+                    const message = event.data;
+                    if (message.startsWith('CWSPEED SET:')) {
+                        const match = message.match(/CWSPEED SET: (\d+) WPM/);
+                        if (match) {
+                            updateSpeedDisplay(parseInt(match[1]));
+                        }
+                    } else if (message.startsWith('CWSPEED:')) {
+                        const match = message.match(/CWSPEED: (\d+) WPM/);
+                        if (match) {
+                            updateSpeedDisplay(parseInt(match[1]));
+                        }
+                    }
                 };
             }
 
@@ -1303,11 +1343,14 @@ $(document).ready(function() {
             }
 
             // Support for Enter key in the input field
-            document.getElementById('message').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    sendMessage();
-                }
-            });
+            const messageElement = document.getElementById('message');
+            if (messageElement) {
+                messageElement.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+            }
         </script>
 
         <script>
@@ -1439,31 +1482,65 @@ $(document).ready(function() {
                 // Clear the input field
                 document.getElementById('sendText').value = '';
             }
+
+            // CW Speed Control Functions
+            let currentCwSpeed = 20; // Default speed
+
+            function adjustCwSpeed(change) {
+                if (ws === null) {
+                    alert('Please connect to WebSocket first');
+                    return;
+                }
+
+                const newSpeed = Math.max(5, Math.min(99, currentCwSpeed + change));
+                
+                if (newSpeed !== currentCwSpeed) {
+                    const speedMessage = 'CWSPEED:' + newSpeed;
+                    ws.send(speedMessage);
+                    logMessage('Sent: ' + speedMessage);
+                    // Get updated speed after changing it
+                    setTimeout(getCwSpeed, 500);
+                }
+            }
+
+            function getCwSpeed() {
+                if (ws === null) {
+                    return;
+                }
+
+                ws.send('GETCWSPEED');
+            }
+
+            function updateSpeedDisplay(speed) {
+                currentCwSpeed = speed;
+                const speedDisplay = document.getElementById('cwSpeedDisplay');
+                if (speedDisplay) {
+                    speedDisplay.textContent = speed + ' WPM';
+                }
+            }
+
+            // Removed constant polling functions to prevent WebSocket disruption
+            // Speed is now only read on initial connection and after speed changes
+
+            // Message log toggle function
+            function toggleMessageLog() {
+                const logContainer = document.getElementById('messageLogContainer');
+                const toggleButton = document.getElementById('toggleLogButton');
+                
+                if (logContainer.style.display === 'none') {
+                    logContainer.style.display = 'block';
+                    toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                    toggleButton.title = 'Hide Message Log';
+                } else {
+                    logContainer.style.display = 'none';
+                    toggleButton.innerHTML = '<i class="fas fa-list"></i>';
+                    toggleButton.title = 'Show Message Log';
+                }
+            }
         </script>
     <?php } ?>
-    <?php if ($this->optionslib->get_option('dxcache_url') != '') { ?>
-        <script type="text/javascript">
-            var dxcluster_provider = '<?php echo base_url(); ?>index.php/dxcluster';
-            $(document).ready(function() {
-                $("#check_cluster").on("click", function() {
-                    $.ajax({
-                        url: dxcluster_provider + "/qrg_lookup/" + $("#frequency").val() / 1000,
-                        cache: false,
-                        dataType: "json"
-                    }).done(
-                        function(dxspot) {
-                            reset_fields();
-                            $("#callsign").val(dxspot.spotted);
-                            $("#callsign").trigger("blur");
-                        }
-                    );
-                });
-            });
-        </script>
-
+    
     <?php
-    }
-
 
     $this->load->model('stations');
     $active_station_id = $this->stations->find_active();
@@ -1871,6 +1948,12 @@ $(document).ready(function() {
             });
             cat2UI($('.mode'), data.mode, false, false, () => {
                 setRst($(".mode").val());
+                // If the data.mode is winkey show the div with id winkey if not hide it
+                if (data.mode === 'CW') {
+                    $('#winkey').show();
+                } else {
+                    $('#winkey').hide();
+                }
             });
             cat2UI($('#sat_name'), data.satname, false, false);
             cat2UI($('#sat_mode'), data.satmode, false, false);
@@ -1978,10 +2061,17 @@ $(document).ready(function() {
 
     <script>
         $(document).ready(function() {
-            // Synchronize the two selects
+            // Load saved radio selection from localStorage
+            var savedRadio = localStorage.getItem("selectedRadio");
+            if (savedRadio !== null && savedRadio !== undefined) {
+                $('.radios').val(savedRadio);
+            }
+
+            // Synchronize the two selects and save to localStorage
             $('.radios').on('change', function() {
                 const selectedValue = $(this).val(); // Get the selected value
                 $('.radios').not(this).val(selectedValue); // Update other selects to match
+                localStorage.setItem("selectedRadio", selectedValue); // Save to localStorage
             });
         });
     </script>

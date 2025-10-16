@@ -138,6 +138,8 @@
 								<a class="dropdown-item" href="<?php echo site_url('map/custom'); ?>" title="Custom Maps of QSOs"><i class="fas fa-map"></i> <?php echo lang('menu_custom_maps'); ?></a>
 								<div class="dropdown-divider"></div>
 								<a class="dropdown-item" href="<?php echo site_url('continents'); ?>" title="Continents"><i class="fas fa-globe-europe"></i> <?php echo lang('menu_continents'); ?></a>
+								<div class="dropdown-divider"></div>
+								<a class="dropdown-item" href="<?php echo site_url('emeinitials'); ?>" title="EME Initials"><i class="fas fa-chart-area"></i> <?php echo lang('menu_eme_initials'); ?></a>
 							</div>
 						</li>
 
@@ -195,15 +197,11 @@
 								<div class="d-inline d-lg-none" style="padding-left: 10px">Tools</div>
 							</a>
 							<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+								<a class="dropdown-item" href="<?php echo site_url('dxcluster'); ?>" title="DX Cluster"><i class="fas fa-broadcast-tower"></i> DX Cluster</a>
+								<div class="dropdown-divider"></div>
 								<a class="dropdown-item" href="<?php echo site_url('workabledxcc'); ?>" title="Upcoming DXPeditions"><i class="fas fa-globe"></i> Upcoming DXPeditions</a>
 								<div class="dropdown-divider"></div>
 								<a class="dropdown-item" href="<?php echo site_url('hamsat'); ?>" title="Hams.at"><i class="fas fa-list"></i> Hams.at</a>
-								<?php if ($this->optionslib->get_option('dxcache_url') != '') { ?>
-									<div class="dropdown-divider"></div>
-									<a class="dropdown-item" href="<?php echo site_url('bandmap/list'); ?>" title="Bandmap"><i class="fa fa-bezier-curve"></i> <?php echo lang('menu_bandmap'); ?></a>
-								<?php } ?>
-								<!-- <div class="dropdown-divider"></div> -->
-								<!-- a class="dropdown-item" href="<?php echo site_url('sattimers'); ?>" title="SAT Timers"><i class="fas fa-satellite"></i> SAT Timers</a> -->
 							</div>
 						</li>
 
